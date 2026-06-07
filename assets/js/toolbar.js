@@ -435,6 +435,9 @@ function buildToolbar() {
   const toolbar = document.getElementById('toolbar');
   toolbar.innerHTML = '';
 
+  // Search section (sticky at top)
+  toolbar.appendChild(makeSearchSection());
+
   // Tools section
   toolbar.appendChild(makeSection('Tools', [
     { label: 'Select', icon: cursorIcon(), mode: 'SELECT' },
@@ -645,6 +648,191 @@ function buildPropsPanel() {
     if (id) deleteUnit(id);
   });
   document.getElementById('props-close')?.addEventListener('click', closePropPanel);
+}
+
+// ─── Symbol Search + MGRS Place ──────────────────────────────────────────────
+
+function makeSearchSection() {
+  const wrap = document.createElement('div');
+  wrap.className = 'search-section';
+  wrap.innerHTML = `
+    <div class="search-input-row">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="symbol-search" placeholder="Search symbols…" autocomplete="off" spellcheck="false">
+      <button id="symbol-search-clear" class="search-clear" title="Clear">&#10005;</button>
+    </div>
+    <ul id="search-results" class="search-results"></ul>
+    <div id="search-place-bar" class="search-place-bar" style="display:none">
+      <div class="search-selected-sym">
+        <div id="search-sel-icon"></div>
+        <span id="search-sel-label"></span>
+      </div>
+      <div class="search-mgrs-row">
+        <input type="text" id="search-mgrs-input" placeholder="MGRS (e.g. 18S UJ 12345 67890)" autocomplete="off" spellcheck="false">
+        <button id="search-place-btn" class="btn-primary" title="Place at this MGRS coordinate">Place</button>
+      </div>
+      <div id="search-mgrs-error" class="search-mgrs-error"></div>
+    </div>
+  `;
+  // Wire after append
+  requestAnimationFrame(() => _wireSearch());
+  return wrap;
+}
+
+function _wireSearch() {
+  const input      = document.getElementById('symbol-search');
+  const clearBtn   = document.getElementById('symbol-search-clear');
+  const resultsList = document.getElementById('search-results');
+  const placeBar   = document.getElementById('search-place-bar');
+  const mgrsInput  = document.getElementById('search-mgrs-input');
+  const placeBtn   = document.getElementById('search-place-btn');
+  const errEl      = document.getElementById('search-mgrs-error');
+  const selIcon    = document.getElementById('search-sel-icon');
+  const selLabel   = document.getElementById('search-sel-label');
+  if (!input) return;
+
+  // All searchable entries: symbols + line types
+  const allEntries = [
+    ...Object.entries(SYMBOL_TYPES).map(([type, def]) => ({
+      kind: 'symbol', type, label: def.label,
+      aff: def.aff, keywords: (def.label + ' ' + type + ' ' + def.aff).toLowerCase(),
+    })),
+    ...[
+      { type: 'phase-line',     label: 'Phase Line' },
+      { type: 'loa',            label: 'LOA' },
+      { type: 'ld',             label: 'LD / LC' },
+      { type: 'unit-boundary',  label: 'Unit Boundary' },
+      { type: 'engagement-area',label: 'Engagement Area' },
+      { type: 'axis-advance',   label: 'Axis of Advance' },
+      { type: 'dir-attack',     label: 'Direction of Attack' },
+      { type: 'trp',            label: 'TRP' },
+    ].map(l => ({ kind: 'line', ...l, keywords: (l.label + ' ' + l.type).toLowerCase() })),
+  ];
+
+  let activeType = null;
+  let activeKind = null;
+
+  function showResults(query) {
+    const q = query.trim().toLowerCase();
+    resultsList.innerHTML = '';
+    if (!q) { resultsList.style.display = 'none'; return; }
+
+    const matches = allEntries.filter(e => e.keywords.includes(q)).slice(0, 12);
+    if (!matches.length) {
+      resultsList.innerHTML = '<li class="search-no-results">No matches</li>';
+      resultsList.style.display = 'block';
+      return;
+    }
+
+    matches.forEach(entry => {
+      const li = document.createElement('li');
+      li.className = 'search-result-item';
+      const icon = entry.kind === 'symbol'
+        ? buildPreviewSvg(entry.type)
+        : `<svg width="22" height="10" viewBox="0 0 22 10"><line x1="1" y1="5" x2="21" y2="5" stroke="#888" stroke-width="1.5"/></svg>`;
+      li.innerHTML = `<span class="sr-icon">${icon}</span><span class="sr-label">${entry.label}</span>
+                      <span class="sr-kind">${entry.kind === 'symbol' ? entry.aff : 'line'}</span>`;
+      li.addEventListener('mousedown', e => {
+        e.preventDefault();
+        selectEntry(entry);
+        input.value = entry.label;
+        resultsList.style.display = 'none';
+        clearBtn.style.display = 'flex';
+      });
+      resultsList.appendChild(li);
+    });
+    resultsList.style.display = 'block';
+  }
+
+  function selectEntry(entry) {
+    activeType = entry.type;
+    activeKind = entry.kind;
+
+    if (entry.kind === 'symbol') {
+      setMode('PLACE', entry.type);
+      selIcon.innerHTML  = buildPreviewSvg(entry.type);
+      selLabel.textContent = entry.label;
+    } else {
+      setMode('DRAW_LINE', entry.type);
+      selIcon.innerHTML  = `<svg width="22" height="10" viewBox="0 0 22 10"><line x1="1" y1="5" x2="21" y2="5" stroke="#888" stroke-width="2"/></svg>`;
+      selLabel.textContent = entry.label;
+    }
+
+    placeBar.style.display = 'block';
+    mgrsInput.value = '';
+    errEl.textContent = '';
+    mgrsInput.focus();
+  }
+
+  function placeAtMgrs() {
+    const raw = mgrsInput.value.trim();
+    errEl.textContent = '';
+
+    if (!raw) {
+      errEl.textContent = 'Enter an MGRS coordinate.';
+      return;
+    }
+
+    const ll = MGRS.toLatLon(raw);
+    if (!ll) {
+      errEl.textContent = 'Invalid MGRS format. Try: 18S UJ 12345 67890';
+      return;
+    }
+
+    if (activeKind === 'symbol') {
+      window.placeUnit([ll.lat, ll.lon], activeType);
+      window.map.panTo([ll.lat, ll.lon]);
+    }
+    // Lines require waypoints — just fly to the location for line mode
+    if (activeKind === 'line') {
+      window.map.panTo([ll.lat, ll.lon]);
+    }
+
+    mgrsInput.value = '';
+    errEl.textContent = `Placed at ${MGRS.fromLatLon(ll.lat, ll.lon)}`;
+    setTimeout(() => { if (errEl.textContent.startsWith('Placed')) errEl.textContent = ''; }, 3000);
+  }
+
+  input.addEventListener('input', () => {
+    clearBtn.style.display = input.value ? 'flex' : 'none';
+    showResults(input.value);
+    if (!input.value) {
+      placeBar.style.display = 'none';
+      activeType = null;
+    }
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      input.value = '';
+      resultsList.style.display = 'none';
+      placeBar.style.display = 'none';
+      clearBtn.style.display = 'none';
+      activeType = null;
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    resultsList.style.display = 'none';
+    placeBar.style.display = 'none';
+    clearBtn.style.display = 'none';
+    activeType = null;
+    input.focus();
+  });
+
+  placeBtn.addEventListener('click', placeAtMgrs);
+
+  mgrsInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') placeAtMgrs();
+  });
+
+  // Close dropdown on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.search-section')) {
+      resultsList.style.display = 'none';
+    }
+  });
 }
 
 // ─── MGRS Settings Panel ──────────────────────────────────────────────────────

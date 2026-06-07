@@ -76,7 +76,93 @@ const MGRS = (() => {
     return `${utm.zoneNum}${utm.latBand}`;
   }
 
-  return { fromLatLon, gzdFromLatLon, latLonToUtm, get100kId };
+  // ── MGRS → Lat/Lon ──────────────────────────────────────────────────────────
+  // Accepts formats like: "18S UJ 12345 67890", "18SUJ1234567890", "18SUJ 12345 67890"
+  function toLatLon(mgrsStr) {
+    if (!mgrsStr) return null;
+    // Normalise: uppercase, remove spaces
+    const s = mgrsStr.toUpperCase().replace(/\s+/g, '');
+    // Parse: zone number (1-2 digits) + lat band (1 letter) + 100k ID (2 letters) + numeric part
+    const m = s.match(/^(\d{1,2})([C-HJ-NP-X])([A-HJ-NP-Z]{2})(\d{2,10})$/);
+    if (!m) return null;
+
+    const zoneNum   = parseInt(m[1]);
+    const latBand   = m[2];
+    const sq100k    = m[3];
+    const numStr    = m[4];
+    if (numStr.length % 2 !== 0) return null;
+
+    const halfLen   = numStr.length / 2;
+    const precision = Math.pow(10, 5 - halfLen);
+    const eOff      = parseInt(numStr.slice(0, halfLen)) * precision;
+    const nOff      = parseInt(numStr.slice(halfLen))    * precision;
+
+    // Resolve 100k square origin
+    const setNum  = (zoneNum - 1) % NUM_100K_SETS;
+    const colSet  = SET_ORIGIN_COLUMNS[setNum];
+    const rowSet  = SET_ORIGIN_ROWS[setNum];
+    const colIdx  = colSet.indexOf(sq100k[0]);
+    const rowIdx  = rowSet.indexOf(sq100k[1]);
+    if (colIdx < 0 || rowIdx < 0) return null;
+
+    const easting100k  = (colIdx + 1) * 100000;
+    let   northing100k = rowIdx * 100000;
+
+    // Determine minimum northing for this lat band
+    const bandIdx    = LAT_BANDS.indexOf(latBand);
+    const minLat     = bandIdx * 8 - 80;
+    const minNorthing = latLonToUtm(minLat, (zoneNum - 1) * 6 - 180 + 3)?.northing ?? 0;
+
+    // Adjust northing100k into the right 2-million-metre band
+    while (northing100k < minNorthing) northing100k += 2000000;
+
+    const easting  = easting100k  + eOff;
+    const northing = northing100k + nOff;
+
+    return utmToLatLon(zoneNum, latBand, easting, northing);
+  }
+
+  function utmToLatLon(zoneNum, latBand, easting, northing) {
+    const a  = 6378137.0, f = 1 / 298.257223563;
+    const b  = a * (1 - f);
+    const ecc2 = 1 - (b*b)/(a*a);
+    const ecc_prime2 = ecc2 / (1 - ecc2);
+    const k0 = 0.9996;
+    const e1  = (1 - Math.sqrt(1 - ecc2)) / (1 + Math.sqrt(1 - ecc2));
+
+    const x = easting - 500000;
+    let   y = northing;
+    if (LAT_BANDS.indexOf(latBand) < 10) y -= 10000000; // southern hemisphere
+
+    const lonOrigin = (zoneNum - 1) * 6 - 180 + 3;
+    const M  = y / k0;
+    const mu = M / (a * (1 - ecc2/4 - 3*ecc2**2/64 - 5*ecc2**3/256));
+    const p1 = mu + (3*e1/2 - 27*e1**3/32) * Math.sin(2*mu)
+                  + (21*e1**2/16 - 55*e1**4/32) * Math.sin(4*mu)
+                  + (151*e1**3/96) * Math.sin(6*mu)
+                  + (1097*e1**4/512) * Math.sin(8*mu);
+
+    const N1 = a / Math.sqrt(1 - ecc2*Math.sin(p1)**2);
+    const T1 = Math.tan(p1)**2;
+    const C1 = ecc_prime2 * Math.cos(p1)**2;
+    const R1 = a*(1-ecc2) / Math.pow(1 - ecc2*Math.sin(p1)**2, 1.5);
+    const D  = x / (N1*k0);
+
+    const lat = p1 - (N1*Math.tan(p1)/R1) * (
+      D**2/2 - (5+3*T1+10*C1-4*C1**2-9*ecc_prime2)*D**4/24
+      + (61+90*T1+298*C1+45*T1**2-252*ecc_prime2-3*C1**2)*D**6/720
+    );
+    const lon = (D - (1+2*T1+C1)*D**3/6
+      + (5-2*C1+(28*T1)-(3*C1**2)+(8*ecc_prime2)+(24*T1**2))*D**5/120
+    ) / Math.cos(p1);
+
+    return {
+      lat: lat * 180 / Math.PI,
+      lon: lonOrigin + lon * 180 / Math.PI,
+    };
+  }
+
+  return { fromLatLon, gzdFromLatLon, latLonToUtm, get100kId, toLatLon };
 })();
 
 // ─── User-configurable settings (shared with the settings panel) ──────────────
