@@ -446,35 +446,128 @@ function buildToolbar() {
     { label: 'Delete', icon: trashIcon(), mode: 'DELETE' },
   ], 'tools', true));
 
-  // Friendly units
-  const friendlyUnits = [
-    'inf-f','mech-f','armor-f','arty-f','arty-sp-f','arty-rkt-f',
-    'avn-rw-f','avn-fw-f','eng-f','sig-f','med-f','recon-f',
-    'ada-f','log-f','hq-co-f','hq-bn-f','hq-bde-f','hq-div-f','cp-f','op-f'
-  ];
-  toolbar.appendChild(makeSymbolSection('Friendly Units', friendlyUnits, true));
-
-  // Enemy units
-  toolbar.appendChild(makeSymbolSection('Enemy Units', ['inf-e','mech-e','armor-e','arty-e','avn-e','unk-e','sus-e'], false));
-
-  // Neutral
-  toolbar.appendChild(makeSymbolSection('Neutral / Unknown', ['unk-g','civ','neu-f'], false));
-
-  // Tactical lines
-  toolbar.appendChild(makeLineSection('Tactical Lines', [
-    { type: 'phase-line',    label: 'Phase Line' },
-    { type: 'loa',           label: 'LOA' },
-    { type: 'ld',            label: 'LD / LC' },
-    { type: 'unit-boundary', label: 'Unit Boundary' },
-    { type: 'engagement-area', label: 'Engagement Area' },
-    { type: 'axis-advance',  label: 'Axis of Advance' },
-    { type: 'dir-attack',    label: 'Dir of Attack' },
-    { type: 'trp',           label: 'TRP' },
-  ], false));
+  // 4-tab symbol panel
+  toolbar.appendChild(makeSymbolTabs());
 
   // Map tools
   toolbar.appendChild(makeMapTools());
   toolbar.appendChild(makeMgrsSettings());
+}
+
+function makeSymbolTabs() {
+  const wrap = document.createElement('div');
+  wrap.className = 'toolbar-section';
+
+  // Tab bar
+  const tabBar = document.createElement('div');
+  tabBar.className = 'sym-tabs';
+  const tabs = [
+    { id: 'tab-formations',  label: 'Forma-\ntions' },
+    { id: 'tab-tactical',    label: 'Tactical\nGraphics' },
+    { id: 'tab-equipment',   label: 'Equip/\nInstal' },
+    { id: 'tab-generic',     label: 'Generic\nGraphics' },
+  ];
+
+  const panels = document.createElement('div');
+  panels.className = 'sym-tab-panels';
+
+  tabs.forEach((t, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'sym-tab' + (i === 0 ? ' active' : '');
+    btn.textContent = t.label;
+    btn.dataset.tab = t.id;
+    btn.onclick = () => {
+      tabBar.querySelectorAll('.sym-tab').forEach(b => b.classList.remove('active'));
+      panels.querySelectorAll('.sym-tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(t.id)?.classList.add('active');
+    };
+    tabBar.appendChild(btn);
+
+    const panel = document.createElement('div');
+    panel.className = 'sym-tab-panel' + (i === 0 ? ' active' : '');
+    panel.id = t.id;
+    panels.appendChild(panel);
+  });
+
+  wrap.appendChild(tabBar);
+  wrap.appendChild(panels);
+
+  // Populate Formations tab: friendly, enemy, neutral sub-sections
+  const formPanel = document.getElementById('tab-formations') || wrap.querySelector('#tab-formations');
+  _fillFormationsTab(wrap.querySelector('#tab-formations'));
+  _fillTacticalTab(wrap.querySelector('#tab-tactical'));
+  _fillEquipmentTab(wrap.querySelector('#tab-equipment'));
+  _fillGenericTab(wrap.querySelector('#tab-generic'));
+
+  return wrap;
+}
+
+function _makeSubSection(title, body, expanded) {
+  const sec = document.createElement('div');
+  sec.className = 'toolbar-section' + (expanded ? '' : ' collapsed');
+  const hdr = document.createElement('div');
+  hdr.className = 'toolbar-section-header';
+  hdr.style.cssText = 'font-size:10px;padding:5px 8px;';
+  hdr.innerHTML = `<span>${title}</span><span class="section-toggle">▼</span>`;
+  hdr.onclick = () => sec.classList.toggle('collapsed');
+  sec.appendChild(hdr);
+  sec.appendChild(body);
+  return sec;
+}
+
+function _symbolGrid(types) {
+  const body = document.createElement('div');
+  body.className = 'toolbar-section-body';
+  types.forEach(type => {
+    const def = SYMBOL_TYPES[type];
+    if (!def) return;
+    const btn = document.createElement('button');
+    btn.className = 'tool-btn';
+    btn.dataset.type = type;
+    btn.innerHTML = `<div>${buildPreviewSvg(type)}</div><span class="btn-label">${def.label}</span>`;
+    btn.title = def.label;
+    btn.onclick = () => setMode('PLACE', type);
+    body.appendChild(btn);
+  });
+  return body;
+}
+
+function _fillFormationsTab(panel) {
+  if (!panel) return;
+  const friendly = Object.keys(SYMBOL_TYPES).filter(k => SYMBOL_TYPES[k].tab === 'formations' && SYMBOL_TYPES[k].aff === 'friendly');
+  const enemy    = Object.keys(SYMBOL_TYPES).filter(k => SYMBOL_TYPES[k].tab === 'formations' && SYMBOL_TYPES[k].aff === 'enemy');
+  const other    = Object.keys(SYMBOL_TYPES).filter(k => SYMBOL_TYPES[k].tab === 'formations' && !['friendly','enemy'].includes(SYMBOL_TYPES[k].aff));
+
+  panel.appendChild(_makeSubSection('Friendly', _symbolGrid(friendly), true));
+  panel.appendChild(_makeSubSection('Enemy', _symbolGrid(enemy), false));
+  if (other.length) panel.appendChild(_makeSubSection('Neutral / Unknown', _symbolGrid(other), false));
+}
+
+function _fillTacticalTab(panel) {
+  if (!panel) return;
+  panel.appendChild(makeLineSection('Tactical Lines', [
+    { type: 'phase-line',     label: 'Phase Line' },
+    { type: 'loa',            label: 'LOA' },
+    { type: 'ld',             label: 'LD / LC' },
+    { type: 'unit-boundary',  label: 'Unit Boundary' },
+    { type: 'engagement-area',label: 'Engagement Area' },
+    { type: 'axis-advance',   label: 'Axis of Advance' },
+    { type: 'dir-attack',     label: 'Dir of Attack' },
+    { type: 'trp',            label: 'TRP' },
+  ], true));
+}
+
+function _fillEquipmentTab(panel) {
+  if (!panel) return;
+  const types = Object.keys(SYMBOL_TYPES).filter(k => SYMBOL_TYPES[k].tab === 'equipment');
+  panel.appendChild(_makeSubSection('Equipment & Installations', _symbolGrid(types), true));
+}
+
+function _fillGenericTab(panel) {
+  if (!panel) return;
+  const types = Object.keys(SYMBOL_TYPES).filter(k => SYMBOL_TYPES[k].tab === 'generic');
+  panel.appendChild(_makeSubSection('Generic Graphics', _symbolGrid(types), true));
 }
 
 function makeSection(title, items, id, expanded = true) {

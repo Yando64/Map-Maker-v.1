@@ -464,6 +464,36 @@
   flex-shrink: 0;
 }
 
+/* SYMBOL TABS */
+.sym-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+  flex-shrink: 0;
+}
+.sym-tab {
+  flex: 1;
+  padding: 6px 2px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: pre-line;
+}
+.sym-tab:hover { color: var(--text-primary); }
+.sym-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.sym-tab-panels { overflow: hidden; }
+.sym-tab-panel { display: none; }
+.sym-tab-panel.active { display: block; }
+
 /* TOOLTIP */
 .sym-tooltip {
   position: fixed;
