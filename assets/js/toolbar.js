@@ -111,6 +111,7 @@ function placeUnit(latlng, type, overrides = {}, addToHistory = true) {
     affiliation: overrides.affiliation || typeDef.aff || 'friendly',
     higherHQ: overrides.higherHQ || '',
     notes: overrides.notes || '',
+    locked: overrides.locked !== undefined ? overrides.locked : true,
     _marker: null,
   };
 
@@ -162,10 +163,31 @@ function duplicateUnit(id) {
   });
 }
 
+function toggleLock(id) {
+  const unit = window.units.find(u => u.id === id);
+  if (!unit) return;
+  unit.locked = !unit.locked;
+
+  // Rebuild marker to update draggable state and lock badge
+  if (unit._marker) window.map.removeLayer(unit._marker);
+  const marker = createMarker(unit, window.map);
+  marker.addTo(window.map);
+  attachMarkerEvents(marker, unit);
+  unit._marker = marker;
+
+  // Update props panel lock button if open
+  const lockBtn = document.getElementById('props-lock-btn');
+  if (lockBtn && window.selectedUnitId === id) {
+    lockBtn.textContent = unit.locked ? '🔒 Locked' : '🔓 Unlocked';
+    lockBtn.classList.toggle('lock-active', unit.locked);
+  }
+}
+
 window.placeUnit = placeUnit;
 window.deleteUnit = deleteUnit;
 window.selectUnit = selectUnit;
 window.duplicateUnit = duplicateUnit;
+window.toggleLock = toggleLock;
 
 // ─── Line Drawing ─────────────────────────────────────────────────────────────
 
@@ -309,6 +331,10 @@ function openPropPanel(unit) {
   document.getElementById('prop-affiliation').value = unit.affiliation || 'friendly';
   document.getElementById('prop-hq').value = unit.higherHQ || '';
   document.getElementById('prop-notes').value = unit.notes || '';
+  const lockBtn = document.getElementById('props-lock-btn');
+  if (lockBtn) {
+    lockBtn.textContent = unit.locked !== false ? '🔒 Locked' : '🔓 Unlocked';
+  }
 }
 
 function closePropPanel() {
@@ -709,12 +735,20 @@ function buildContextMenu() {
   const menu = document.getElementById('context-menu');
   menu.innerHTML = `
     <div class="context-menu-item" onclick="window.selectUnit(document.getElementById('context-menu').dataset.unitId);document.getElementById('context-menu').classList.remove('open')">Edit Properties</div>
+    <div class="context-menu-item" id="ctx-lock-item" onclick="_ctxToggleLock()">🔒 Unlock</div>
     <div class="context-menu-item" onclick="window.duplicateUnit(document.getElementById('context-menu').dataset.unitId);document.getElementById('context-menu').classList.remove('open')">Duplicate</div>
     <div class="context-menu-item" onclick="copyMgrs(document.getElementById('context-menu').dataset.unitId);document.getElementById('context-menu').classList.remove('open')">Copy MGRS</div>
     <div class="context-menu-sep"></div>
     <div class="context-menu-item danger" onclick="window.deleteUnit(document.getElementById('context-menu').dataset.unitId);document.getElementById('context-menu').classList.remove('open')">Delete</div>
   `;
 }
+
+function _ctxToggleLock() {
+  const id = document.getElementById('context-menu').dataset.unitId;
+  window.toggleLock(id);
+  document.getElementById('context-menu').classList.remove('open');
+}
+window._ctxToggleLock = _ctxToggleLock;
 
 function copyMgrs(id) {
   const unit = window.units.find(u => u.id === id);

@@ -125,6 +125,14 @@ function showContextMenu(x, y, unitId) {
   menu.style.left = x + 'px';
   menu.style.top  = y + 'px';
   menu.dataset.unitId = unitId;
+
+  // Update lock label to match current state
+  const unit = window.units && window.units.find(u => u.id === unitId);
+  const lockItem = document.getElementById('ctx-lock-item');
+  if (lockItem && unit) {
+    lockItem.textContent = unit.locked !== false ? '🔓 Unlock' : '🔒 Lock';
+  }
+
   menu.classList.add('open');
 }
 

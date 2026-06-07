@@ -622,14 +622,19 @@ function createMarker(unit, map) {
     anchorX = iconW/2; anchorY = frame.svgH/2 + echH;
   }
 
-  const html = `<div class="sym-wrapper" id="sym-${unit.id}" data-id="${unit.id}">
+  const lockBadge = unit.locked !== false
+    ? `<div class="sym-lock-badge" title="Locked — right-click to unlock">🔒</div>`
+    : '';
+
+  const html = `<div class="sym-wrapper${unit.locked === false ? ' sym-unlocked' : ''}" id="sym-${unit.id}" data-id="${unit.id}">
     <div class="sym-svg">${svgStr}</div>
     ${label ? `<div class="sym-label" style="color:${cfg.stroke}">${label}</div>` : ''}
+    ${lockBadge}
   </div>`;
 
   return L.marker(unit.latlng, {
     icon: L.divIcon({ html, className:'', iconSize:[iconW, iconH], iconAnchor:[anchorX, anchorY] }),
-    draggable: true,
+    draggable: unit.locked === false,
     title: def.label,
   });
 }

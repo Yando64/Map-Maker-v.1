@@ -30,6 +30,8 @@ button.active, button.btn-primary {
 }
 button.active:hover, button.btn-primary:hover { background: var(--accent-hover); }
 button.btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+button.btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--border); }
+button.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
 input[type="text"], input[type="search"], textarea, select {
   background: var(--bg-secondary);
