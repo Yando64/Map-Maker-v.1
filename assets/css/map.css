@@ -120,9 +120,12 @@
   height: 100%;
 }
 
-/* Tile filter for dark mode */
+/* Tile filter for dark mode — suppressed when White Background layer is active */
 [data-theme="dark"] .leaflet-tile-pane {
   filter: brightness(0.45) saturate(0.6);
+}
+[data-theme="dark"] #map.white-bg-active .leaflet-tile-pane {
+  filter: none;
 }
 
 /* STATUS BAR */
