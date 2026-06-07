@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Tactical Map</title>
+  <link rel="icon" href="assets/img/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="assets/css/themes.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+<nav class="nav-bar">
+  <div class="nav-logo">⬡ <span>Tactical Map</span></div>
+  <div class="nav-links">
+    <a href="index.html">Map</a>
+    <a href="help.html">Help</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-controls">
+    <button id="theme-toggle" title="Toggle theme">🌙</button>
+  </div>
+</nav>
+
+<div class="page-container">
+  <h1>About Tactical Map</h1>
+  <p>
+    Tactical Map is a static, client-side web application for creating and sharing military
+    map overlays using standard NATO and US Army symbology. It runs entirely in your browser —
+    no server, no login, no data uploaded anywhere. Overlays are saved as JSON files you control.
+  </p>
+
+  <h2>MIL-STD-2525D</h2>
+  <p>
+    MIL-STD-2525D is the US Department of Defense standard for common warfighting symbology.
+    It defines how military units, equipment, installations, and control measures are represented
+    on maps and displays. Symbols are organized by affiliation (friendly, enemy, neutral, unknown),
+    echelon, and function.
+  </p>
+  <p>
+    Reference: <a href="https://www.jcs.mil/Portals/36/Documents/Doctrine/misc_pubs/ms_2525d.pdf" target="_blank" rel="noopener">MIL-STD-2525D (Joint Chiefs of Staff)</a>
+  </p>
+
+  <h2>NATO APP-6</h2>
+  <p>
+    NATO Standardization Agreement (STANAG) APP-6 provides the Alliance equivalent of
+    MIL-STD-2525, enabling interoperability among NATO member nations. The frame shapes and
+    color conventions are shared; some internal icon geometry differs for specific unit types
+    such as aviation and engineer symbols.
+  </p>
+  <p>
+    Reference: <a href="https://nso.nato.int/nso/nsdd/listpromulg.html" target="_blank" rel="noopener">NATO Standardization Office (NSO)</a>
+  </p>
+
+  <h2>Symbol Color Convention</h2>
+  <table>
+    <thead>
+      <tr><th>Affiliation</th><th>Color</th><th>Badge</th><th>Frame Shape</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Friendly</td>
+        <td>#4a90b8 (Blue)</td>
+        <td><span class="badge badge-friendly">Friendly</span></td>
+        <td>Rectangle</td>
+      </tr>
+      <tr>
+        <td>Enemy / Hostile</td>
+        <td>#e04040 (Red)</td>
+        <td><span class="badge badge-enemy">Enemy</span></td>
+        <td>Diamond (rotated)</td>
+      </tr>
+      <tr>
+        <td>Neutral</td>
+        <td>#9c7a3a (Amber)</td>
+        <td><span class="badge badge-neutral">Neutral</span></td>
+        <td>Square (upright)</td>
+      </tr>
+      <tr>
+        <td>Unknown</td>
+        <td>#7c4aad (Purple)</td>
+        <td><span class="badge badge-unknown">Unknown</span></td>
+        <td>Diamond</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Echelon Indicator Reference</h2>
+  <table>
+    <thead>
+      <tr><th>Echelon</th><th>Symbol</th><th>Typical Size</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Team / Crew</td><td style="font-family:monospace">•</td><td>4–9 personnel</td></tr>
+      <tr><td>Squad</td><td style="font-family:monospace">••</td><td>9–12 personnel</td></tr>
+      <tr><td>Section</td><td style="font-family:monospace">•••</td><td>16–40 personnel</td></tr>
+      <tr><td>Platoon</td><td style="font-family:monospace">|</td><td>26–55 personnel</td></tr>
+      <tr><td>Company</td><td style="font-family:monospace">||</td><td>80–225 personnel</td></tr>
+      <tr><td>Battalion</td><td style="font-family:monospace">|||</td><td>300–1,000 personnel</td></tr>
+      <tr><td>Regiment</td><td style="font-family:monospace">X</td><td>1,000–3,000 personnel</td></tr>
+      <tr><td>Brigade</td><td style="font-family:monospace">XX</td><td>1,500–5,000 personnel</td></tr>
+      <tr><td>Division</td><td style="font-family:monospace">XXX</td><td>10,000–20,000 personnel</td></tr>
+      <tr><td>Corps</td><td style="font-family:monospace">XXXX</td><td>20,000–80,000 personnel</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Credits &amp; Open Source</h2>
+  <ul>
+    <li><a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet.js</a> — Interactive maps</li>
+    <li><a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a> — Street map tiles</li>
+    <li><a href="https://www.esri.com" target="_blank" rel="noopener">Esri / ArcGIS</a> — Satellite imagery tiles</li>
+    <li><a href="https://html2canvas.hertzen.com" target="_blank" rel="noopener">html2canvas</a> — PNG export</li>
+    <li><a href="https://parall.ax/products/jspdf" target="_blank" rel="noopener">jsPDF</a> — PDF export</li>
+    <li><a href="https://github.com/eligrey/FileSaver.js" target="_blank" rel="noopener">FileSaver.js</a> — File downloads</li>
+    <li><a href="https://stuen.com" target="_blank" rel="noopener">Stamen Design</a> — Terrain tiles</li>
+  </ul>
+
+  <div class="page-footer">
+    Tactical Map — Static web application for military training overlays. Not for operational use.
+  </div>
+</div>
+
+<script>
+  (function() {
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('theme-toggle').textContent = saved === 'dark' ? '🌙' : '☀️';
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌙' : '☀️';
+    });
+  })();
+</script>
+</body>
+</html>

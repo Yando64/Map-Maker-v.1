@@ -1,0 +1,9 @@
+{
+  "overlays": [
+    {
+      "name": "Example Exercise — IRON EAGLE Day 1",
+      "file": "example-overlay.json",
+      "date": "2025-01-15"
+    }
+  ]
+}

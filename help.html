@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Help — Tactical Map</title>
+  <link rel="icon" href="assets/img/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="assets/css/themes.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+<nav class="nav-bar">
+  <div class="nav-logo">⬡ <span>Tactical Map</span></div>
+  <div class="nav-links">
+    <a href="index.html">Map</a>
+    <a href="about.html">About</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-controls">
+    <button id="theme-toggle" title="Toggle theme">🌙</button>
+  </div>
+</nav>
+
+<div class="page-container">
+  <h1>Help &amp; Tutorial</h1>
+
+  <h2>Quick Start</h2>
+  <ol>
+    <li>Open <a href="index.html">Tactical Map</a> in your browser.</li>
+    <li>Choose a symbol from the left toolbar (e.g. <strong>Infantry</strong> under Friendly Units).</li>
+    <li>Click anywhere on the map to place the symbol. The cursor changes to a crosshair in Place mode.</li>
+    <li>Click the <strong>Select</strong> tool (or press <kbd class="kbd">S</kbd>) to switch back to move/edit mode.</li>
+    <li>Click a placed symbol to open its Properties panel and set a callsign, echelon, and notes.</li>
+    <li>Use <strong>Save Overlay</strong> (or <kbd class="kbd">Ctrl+S</kbd>) to download a JSON file of your work.</li>
+  </ol>
+
+  <h2>Placing Symbols</h2>
+  <p>
+    Select any symbol type from the toolbar. The toolbar is organized into sections:
+    <strong>Friendly Units</strong> (blue), <strong>Enemy Units</strong> (red),
+    <strong>Neutral / Unknown</strong> (amber / purple), and <strong>Tactical Lines</strong>.
+    Clicking a symbol button activates <strong>Place mode</strong> for that symbol type.
+    Each subsequent click on the map places another symbol of the same type.
+    Press <kbd class="kbd">Escape</kbd> or <kbd class="kbd">S</kbd> to return to Select mode.
+  </p>
+  <p>
+    Symbols automatically scale with the map zoom level — they appear larger at higher zoom
+    levels so they remain readable relative to the terrain features beneath them.
+  </p>
+
+  <h2>Moving &amp; Editing Symbols</h2>
+  <p>
+    In <strong>Select mode</strong>, you can:
+  </p>
+  <ul>
+    <li><strong>Drag</strong> any symbol to reposition it on the map.</li>
+    <li><strong>Click</strong> a symbol to open the Properties panel on the right.</li>
+    <li><strong>Right-click</strong> a symbol for a context menu with Edit, Duplicate, Copy MGRS, and Delete options.</li>
+  </ul>
+  <p>
+    In the Properties panel you can set the unit's callsign / label, echelon, affiliation,
+    higher headquarters, and free-text notes. Click <strong>Apply</strong> to save changes.
+  </p>
+
+  <h2>Drawing Lines and Areas</h2>
+  <p>
+    Select a line type from the <strong>Tactical Lines</strong> section of the toolbar.
+    This activates Draw Line mode. Click the map to place waypoints one at a time.
+    <strong>Double-click</strong> the final point (or press <kbd class="kbd">Enter</kbd>) to finish the line.
+    Press <kbd class="kbd">Escape</kbd> to cancel a line in progress.
+  </p>
+  <p>Line types and their appearance:</p>
+  <table>
+    <thead><tr><th>Type</th><th>Color</th><th>Style</th></tr></thead>
+    <tbody>
+      <tr><td>Phase Line</td><td>Blue</td><td>Solid</td></tr>
+      <tr><td>LOA (Limit of Advance)</td><td>Blue</td><td>Dashed</td></tr>
+      <tr><td>LD / LC (Line of Departure)</td><td>Red</td><td>Solid</td></tr>
+      <tr><td>Unit Boundary</td><td>Dark</td><td>Solid</td></tr>
+      <tr><td>Engagement Area</td><td>Orange</td><td>Dashed</td></tr>
+      <tr><td>Axis of Advance</td><td>Blue</td><td>Arrow</td></tr>
+      <tr><td>Direction of Attack</td><td>Red</td><td>Arrow</td></tr>
+      <tr><td>TRP (Target Reference Point)</td><td>Red</td><td>✕ marker</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Saving and Loading Overlays</h2>
+  <p>
+    All data is stored in a simple JSON format. Use the <strong>Map Tools</strong> section at the bottom
+    of the toolbar to save and load:
+  </p>
+  <ul>
+    <li><strong>Save Overlay</strong> — prompts for a name, then downloads a <code>.json</code> file.</li>
+    <li><strong>Load Overlay</strong> — opens a file picker to load a previously saved <code>.json</code>.</li>
+    <li><strong>GitHub Overlays</strong> — fetches an index from the repository's <code>/overlays/</code>
+        folder and lets you load shared overlays directly.</li>
+  </ul>
+  <p>
+    Loading an overlay <em>adds</em> to whatever is already on the map. Use <strong>Clear All</strong>
+    first if you want to start fresh.
+  </p>
+
+  <h2>Exporting Your Map</h2>
+  <ul>
+    <li><strong>Export PNG</strong> — captures the visible map area as a PNG image.</li>
+    <li><strong>Export PDF</strong> — creates a landscape A4 PDF with the map and a unit legend.</li>
+    <li><strong>Export GeoJSON</strong> — exports all units and lines as standard GeoJSON,
+        compatible with QGIS, ArcGIS, and other GIS tools.</li>
+    <li><strong>Export KMZ</strong> — exports a KMZ file compatible with Google Earth.</li>
+  </ul>
+
+  <h2>MGRS Coordinate System</h2>
+  <p>
+    The Military Grid Reference System (MGRS) divides the world into Grid Zone Designators (GZDs),
+    then into 100km squares identified by two letters, then into numeric grid coordinates.
+    A full 10-digit MGRS reference (5 digits easting + 5 digits northing) identifies a 1-meter square.
+  </p>
+  <p>
+    Example: <code>18S UJ 12345 67890</code>
+  </p>
+  <ul>
+    <li><code>18S</code> — Grid Zone Designator</li>
+    <li><code>UJ</code> — 100km square identifier</li>
+    <li><code>12345</code> — Easting (5 digits = 1m precision)</li>
+    <li><code>67890</code> — Northing (5 digits = 1m precision)</li>
+  </ul>
+  <p>
+    The MGRS Grid overlay (toggle via the layer control top-right) draws grid lines on the map.
+    The grid density adjusts automatically with zoom level — 100km zones at low zoom,
+    down to 100m squares at high zoom.
+  </p>
+
+  <h2>Keyboard Shortcuts</h2>
+  <table>
+    <thead><tr><th>Key</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><kbd class="kbd">S</kbd></td><td>Select / Move mode</td></tr>
+      <tr><td><kbd class="kbd">P</kbd></td><td>Place Symbol mode (last type used)</td></tr>
+      <tr><td><kbd class="kbd">L</kbd></td><td>Draw Line mode (last type used)</td></tr>
+      <tr><td><kbd class="kbd">Ctrl+Z</kbd></td><td>Undo</td></tr>
+      <tr><td><kbd class="kbd">Ctrl+Y</kbd></td><td>Redo</td></tr>
+      <tr><td><kbd class="kbd">Delete</kbd></td><td>Delete selected symbol</td></tr>
+      <tr><td><kbd class="kbd">Ctrl+S</kbd></td><td>Save overlay</td></tr>
+      <tr><td><kbd class="kbd">Escape</kbd></td><td>Cancel current action / return to Select</td></tr>
+      <tr><td><kbd class="kbd">Enter</kbd></td><td>Finish current line (in Draw Line mode)</td></tr>
+      <tr><td><kbd class="kbd">T</kbd></td><td>Toggle dark / light theme</td></tr>
+      <tr><td><kbd class="kbd">G</kbd></td><td>Toggle MGRS grid overlay</td></tr>
+    </tbody>
+  </table>
+
+  <h2>FAQ</h2>
+
+  <h3>Is my data stored anywhere online?</h3>
+  <p>No. All data stays in your browser. Nothing is sent to any server. Overlays are downloaded
+     as files to your computer.</p>
+
+  <h3>Can I share an overlay with others?</h3>
+  <p>Yes — share the downloaded JSON file. The recipient can load it using <strong>Load Overlay</strong>.
+     If the repository owner adds overlays to the <code>/overlays/</code> folder, they will appear
+     in the GitHub Overlays list.</p>
+
+  <h3>Why don't symbols appear when I zoom out too far?</h3>
+  <p>Symbols scale proportionally with zoom. At very low zoom levels (&lt;4) they become very small
+     but are still present. Zoom in to a region of interest before placing symbols.</p>
+
+  <h3>Can I change a symbol's affiliation after placing it?</h3>
+  <p>Yes — click the symbol to open its Properties panel, change the <strong>Affiliation</strong>
+     dropdown, and click Apply. The frame color and shape will update immediately.</p>
+
+  <h3>Does this work offline?</h3>
+  <p>The app itself works offline once loaded (for symbol placement, editing, and export).
+     Map tiles require an internet connection. GitHub Overlays also require connectivity.</p>
+
+  <div class="page-footer">
+    Tactical Map — Static web application for military training overlays. Not for operational use.
+  </div>
+</div>
+
+<script>
+  (function() {
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('theme-toggle').textContent = saved === 'dark' ? '🌙' : '☀️';
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌙' : '☀️';
+    });
+  })();
+</script>
+</body>
+</html>

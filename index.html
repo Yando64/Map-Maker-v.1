@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tactical Map</title>
+  <link rel="icon" href="assets/img/favicon.ico" type="image/x-icon">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- CDN Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="assets/css/themes.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/map.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- NAV BAR -->
+  <nav class="nav-bar">
+    <div class="nav-logo">⬡ <span>Tactical Map</span></div>
+    <div class="nav-links">
+      <a href="about.html">About</a>
+      <a href="help.html">Help</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-controls">
+      <select id="std-selector" title="Symbol standard">
+        <option value="mil2525d">MIL-STD-2525D</option>
+        <option value="app6">NATO APP-6</option>
+      </select>
+      <button id="theme-toggle" title="Toggle theme">🌙</button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div id="main-content">
+
+    <!-- TOOLBAR -->
+    <div id="toolbar"></div>
+
+    <!-- MAP CONTAINER -->
+    <div id="map-container">
+      <div id="map"></div>
+
+      <!-- PROPERTIES PANEL -->
+      <div id="props-panel">
+        <div class="props-header">
+          <span id="props-title">Unit Properties</span>
+          <button class="props-close" id="props-close">✕</button>
+        </div>
+        <div class="props-body">
+          <div class="props-coords" id="props-coords"></div>
+          <div class="form-group">
+            <label>Callsign / Label</label>
+            <input type="text" id="prop-label" placeholder="e.g. 1-12 IN">
+          </div>
+          <div class="form-group">
+            <label>Echelon</label>
+            <select id="prop-echelon">
+              <option value="">— None —</option>
+              <option value="team">Team / Crew</option>
+              <option value="squad">Squad</option>
+              <option value="section">Section</option>
+              <option value="platoon">Platoon</option>
+              <option value="company">Company</option>
+              <option value="battalion">Battalion</option>
+              <option value="regiment">Regiment</option>
+              <option value="brigade">Brigade</option>
+              <option value="division">Division</option>
+              <option value="corps">Corps</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Affiliation</label>
+            <select id="prop-affiliation">
+              <option value="friendly">Friendly (Blue)</option>
+              <option value="enemy">Enemy (Red)</option>
+              <option value="neutral">Neutral (Amber)</option>
+              <option value="unknown">Unknown (Purple)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Higher HQ</label>
+            <input type="text" id="prop-hq" placeholder="e.g. 3BCT">
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="prop-notes" placeholder="Optional notes…"></textarea>
+          </div>
+        </div>
+        <div class="props-footer">
+          <button id="props-apply" class="btn-primary">Apply</button>
+          <button id="props-delete" class="btn-danger">Delete</button>
+        </div>
+      </div>
+
+      <!-- CONTEXT MENU -->
+      <div id="context-menu" class="context-menu"></div>
+
+      <!-- TOOLTIP -->
+      <div id="sym-tooltip" class="sym-tooltip"></div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div id="status-bar">
+    <div class="status-item">MGRS: <span id="status-mgrs">—</span></div>
+    <div class="status-item">Zoom: <span id="status-zoom">7</span></div>
+    <div class="status-item">Units: <span id="status-units">0</span></div>
+    <div class="status-item">Lines: <span id="status-lines">0</span></div>
+    <div class="status-item" id="status-mode">Mode: <span id="status-mode-val">SELECT</span></div>
+    <div class="status-item">STD: <span id="status-std">MIL-STD-2525D</span></div>
+    <div class="status-item" style="font-size:10px;color:var(--text-secondary);margin-left:auto">
+      Double-click to finish line • Esc to cancel
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY LIST MODAL -->
+<div id="overlay-modal" class="modal-overlay">
+  <div class="modal">
+    <h3>Load GitHub Overlay</h3>
+    <ul id="overlay-list" class="overlay-list"></ul>
+    <div class="modal-footer">
+      <button id="overlay-modal-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Exporting…</p>
+</div>
+
+<!-- Hidden file input for overlay loading -->
+<input type="file" id="load-file-input" accept=".json" style="display:none">
+
+<!-- App JS (order matters) -->
+<script src="assets/js/mgrs.js"></script>
+<script src="assets/js/symbols.js"></script>
+<script src="assets/js/map.js"></script>
+<script src="assets/js/toolbar.js"></script>
+<script src="assets/js/overlay.js"></script>
+<script src="assets/js/export.js"></script>
+
+<script>
+  // ─── Theme & Standard Init ────────────────────────────────────────────────
+
+  (function initTheme() {
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('theme-toggle').textContent = saved === 'dark' ? '🌙' : '☀️';
+  })();
+
+  window.toggleTheme = function() {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌙' : '☀️';
+    // Redraw MGRS grid if active
+    if (window.mgrsGridLayer && window.map.hasLayer(window.mgrsGridLayer)) {
+      window.mgrsGridLayer._redraw();
+    }
+  };
+
+  document.getElementById('theme-toggle').addEventListener('click', window.toggleTheme);
+
+  window.milStd = 'mil2525d';
+  document.getElementById('std-selector').addEventListener('change', e => {
+    window.milStd = e.target.value;
+    document.getElementById('status-std').textContent =
+      e.target.value === 'mil2525d' ? 'MIL-STD-2525D' : 'NATO APP-6';
+    rebuildAllMarkers();
+  });
+
+  // ─── MGRS Grid Toggle ──────────────────────────────────────────────────────
+  window.toggleMgrsGrid = function() {
+    if (!window.map || !window.mgrsGridLayer) return;
+    if (window.map.hasLayer(window.mgrsGridLayer)) {
+      window.map.removeLayer(window.mgrsGridLayer);
+    } else {
+      window.mgrsGridLayer.addTo(window.map);
+    }
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+{
+  "version": "1.0",
+  "standard": "mil2525d",
+  "name": "Exercise IRON EAGLE — Day 1",
+  "created": "2025-01-15T0900Z",
+  "units": [
+    {
+      "id": "unit-001",
+      "type": "inf-f",
+      "latlng": [35.12, -80.05],
+      "label": "1-12 IN",
+      "echelon": "battalion",
+      "affiliation": "friendly",
+      "higherHQ": "3BCT",
+      "notes": "Main effort"
+    },
+    {
+      "id": "unit-002",
+      "type": "armor-f",
+      "latlng": [35.08, -80.12],
+      "label": "2-66 AR",
+      "echelon": "battalion",
+      "affiliation": "friendly",
+      "higherHQ": "3BCT",
+      "notes": "Supporting effort"
+    },
+    {
+      "id": "unit-003",
+      "type": "arty-f",
+      "latlng": [35.05, -80.08],
+      "label": "3-82 FA",
+      "echelon": "battalion",
+      "affiliation": "friendly",
+      "higherHQ": "3BCT",
+      "notes": "DS to 1-12 IN"
+    },
+    {
+      "id": "unit-004",
+      "type": "inf-e",
+      "latlng": [35.22, -80.02],
+      "label": "OPF INF",
+      "echelon": "company",
+      "affiliation": "enemy",
+      "higherHQ": "",
+      "notes": "Dug-in defensive position"
+    },
+    {
+      "id": "unit-005",
+      "type": "armor-e",
+      "latlng": [35.25, -80.10],
+      "label": "OPF ARM",
+      "echelon": "platoon",
+      "affiliation": "enemy",
+      "higherHQ": "",
+      "notes": "Reserve element"
+    },
+    {
+      "id": "unit-006",
+      "type": "cp-f",
+      "latlng": [34.98, -80.08],
+      "label": "3BCT TAC",
+      "echelon": "brigade",
+      "affiliation": "friendly",
+      "higherHQ": "25ID",
+      "notes": "Tactical CP"
+    }
+  ],
+  "lines": [
+    {
+      "id": "line-001",
+      "lineType": "phase-line",
+      "label": "PL GOLD",
+      "latlngs": [[35.16, -80.25], [35.16, -79.85]]
+    },
+    {
+      "id": "line-002",
+      "lineType": "loa",
+      "label": "LOA SILVER",
+      "latlngs": [[35.28, -80.25], [35.28, -79.85]]
+    }
+  ]
+}
