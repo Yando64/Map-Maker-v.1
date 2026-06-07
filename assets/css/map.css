@@ -239,16 +239,6 @@
 }
 [data-theme="light"] .sym-label { color: #000; text-shadow: 0 0 3px #fff, 0 0 6px #fff; }
 
-/* Lock badge on locked markers */
-.sym-lock-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  font-size: 9px;
-  line-height: 1;
-  pointer-events: none;
-  opacity: 0.85;
-}
 .sym-wrapper { position: relative; }
 .sym-wrapper.sym-unlocked .sym-svg { filter: drop-shadow(0 0 3px #f0a040); }
 
