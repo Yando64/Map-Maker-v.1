@@ -471,6 +471,7 @@ function buildToolbar() {
 
   // Map tools
   toolbar.appendChild(makeMapTools());
+  toolbar.appendChild(makeMgrsSettings());
 }
 
 function makeSection(title, items, id, expanded = true) {
@@ -644,6 +645,94 @@ function buildPropsPanel() {
     if (id) deleteUnit(id);
   });
   document.getElementById('props-close')?.addEventListener('click', closePropPanel);
+}
+
+// ─── MGRS Settings Panel ──────────────────────────────────────────────────────
+
+function makeMgrsSettings() {
+  const sec = document.createElement('div');
+  sec.className = 'toolbar-section collapsed';
+  sec.id = 'sec-mgrs-settings';
+
+  const header = document.createElement('div');
+  header.className = 'toolbar-section-header';
+  header.innerHTML = `<span>MGRS Grid Settings</span><span class="section-toggle">▼</span>`;
+  header.onclick = () => sec.classList.toggle('collapsed');
+
+  const body = document.createElement('div');
+  body.style.cssText = 'padding:10px;display:flex;flex-direction:column;gap:10px;';
+
+  body.innerHTML = `
+    <div class="mgrs-row">
+      <label>Dark theme color</label>
+      <input type="color" id="mgrs-dark-color" value="#ffff50">
+    </div>
+    <div class="mgrs-row">
+      <label>Light theme color</label>
+      <input type="color" id="mgrs-light-color" value="#1450dc">
+    </div>
+    <div class="mgrs-row">
+      <label>Opacity <span id="mgrs-opacity-val">40%</span></label>
+      <input type="range" id="mgrs-opacity" min="5" max="100" value="40" step="5">
+    </div>
+    <div class="mgrs-row">
+      <label>Line width <span id="mgrs-lw-val">1.0×</span></label>
+      <input type="range" id="mgrs-linewidth" min="0.5" max="3" value="1" step="0.25">
+    </div>
+    <div class="mgrs-row">
+      <label>Show labels</label>
+      <input type="checkbox" id="mgrs-labels" checked style="width:auto">
+    </div>
+    <div class="mgrs-row">
+      <label>Show GZD zones</label>
+      <input type="checkbox" id="mgrs-gzd" checked style="width:auto">
+    </div>
+    <div style="font-size:11px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-top:2px;">Grid levels</div>
+    <div class="mgrs-row"><label>100 km squares</label><input type="checkbox" id="mgrs-lvl-100km" checked style="width:auto"></div>
+    <div class="mgrs-row"><label>10 km squares</label> <input type="checkbox" id="mgrs-lvl-10km"  checked style="width:auto"></div>
+    <div class="mgrs-row"><label>1 km squares</label>  <input type="checkbox" id="mgrs-lvl-1km"   checked style="width:auto"></div>
+    <div class="mgrs-row"><label>100 m squares</label> <input type="checkbox" id="mgrs-lvl-100m"  checked style="width:auto"></div>
+  `;
+
+  sec.appendChild(header);
+  sec.appendChild(body);
+
+  // Wire up controls after they're in the DOM
+  requestAnimationFrame(() => _wireMgrsControls());
+
+  return sec;
+}
+
+function _wireMgrsControls() {
+  function refresh() {
+    const s = window.mgrsSettings;
+    s.darkColor  = document.getElementById('mgrs-dark-color').value;
+    s.lightColor = document.getElementById('mgrs-light-color').value;
+    s.opacity    = parseInt(document.getElementById('mgrs-opacity').value) / 100;
+    s.lineWidth  = parseFloat(document.getElementById('mgrs-linewidth').value);
+    s.showLabels = document.getElementById('mgrs-labels').checked;
+    s.showGzd    = document.getElementById('mgrs-gzd').checked;
+    s.levels['100km'] = document.getElementById('mgrs-lvl-100km').checked;
+    s.levels['10km']  = document.getElementById('mgrs-lvl-10km').checked;
+    s.levels['1km']   = document.getElementById('mgrs-lvl-1km').checked;
+    s.levels['100m']  = document.getElementById('mgrs-lvl-100m').checked;
+
+    document.getElementById('mgrs-opacity-val').textContent =
+      Math.round(s.opacity * 100) + '%';
+    document.getElementById('mgrs-lw-val').textContent =
+      s.lineWidth.toFixed(2) + '×';
+
+    if (window.mgrsGridLayer && typeof window.mgrsGridLayer.refresh === 'function') {
+      window.mgrsGridLayer.refresh();
+    }
+  }
+
+  ['mgrs-dark-color','mgrs-light-color','mgrs-opacity','mgrs-linewidth',
+   'mgrs-labels','mgrs-gzd','mgrs-lvl-100km','mgrs-lvl-10km','mgrs-lvl-1km','mgrs-lvl-100m']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', refresh);
+    });
 }
 
 // ─── SVG Icon Helpers ─────────────────────────────────────────────────────────

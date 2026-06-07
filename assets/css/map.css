@@ -293,6 +293,40 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* MGRS SETTINGS ROWS */
+.mgrs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.mgrs-row label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+.mgrs-row input[type="color"] {
+  width: 36px;
+  height: 24px;
+  padding: 1px 2px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.mgrs-row input[type="range"] {
+  width: 90px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  padding: 0;
+}
+.mgrs-row input[type="checkbox"] {
+  width: auto;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
 /* TOOLTIP */
 .sym-tooltip {
   position: fixed;
