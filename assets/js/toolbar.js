@@ -456,7 +456,6 @@ function openPolygonPropPanel(polyObj) {
   document.getElementById('prop-label').value = polyObj.label || '';
   document.getElementById('prop-echelon').value = '';
   document.getElementById('prop-affiliation').value = '';
-  document.getElementById('prop-hq').value = '';
   document.getElementById('prop-notes').value = '';
   const lockBtn = document.getElementById('props-lock-btn');
   if (lockBtn) lockBtn.style.display = 'none';
@@ -483,7 +482,6 @@ function openPropPanel(unit) {
   document.getElementById('prop-echelon').value = unit.echelon || '';
   document.getElementById('prop-affiliation').value = unit.affiliation || 'friendly';
   document.getElementById('prop-status').value = unit.status || 'known';
-  document.getElementById('prop-hq').value = unit.higherHQ || '';
   document.getElementById('prop-notes').value = unit.notes || '';
   const c = unit.comms || {};
   document.getElementById('prop-comms-callsign').value = c.callsign || '';
@@ -537,7 +535,6 @@ function savePropPanel() {
   unit.echelon = document.getElementById('prop-echelon').value;
   unit.affiliation = document.getElementById('prop-affiliation').value;
   unit.status = document.getElementById('prop-status').value;
-  unit.higherHQ = document.getElementById('prop-hq').value;
   unit.notes = document.getElementById('prop-notes').value;
   unit.comms = {
     callsign: document.getElementById('prop-comms-callsign').value,
@@ -568,7 +565,6 @@ function openLinePropPanel(lineObj) {
   document.getElementById('prop-label').value = lineObj.label || '';
   document.getElementById('prop-echelon').value = '';
   document.getElementById('prop-affiliation').value = '';
-  document.getElementById('prop-hq').value = '';
   document.getElementById('prop-notes').value = '';
 }
 
