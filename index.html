@@ -73,9 +73,22 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Callsign / Label</label>
-            <input type="text" id="prop-label" placeholder="e.g. 1-12 IN">
+            <div class="label-field-header">
+              <label>Callsign / Label</label>
+              <div class="label-pos-btns" id="label-pos-btns">
+                <button class="label-pos-btn active" data-pos="top"    title="Above symbol">↑</button>
+                <button class="label-pos-btn"        data-pos="left"   title="Left of symbol">←</button>
+                <button class="label-pos-btn"        data-pos="right"  title="Right of symbol">→</button>
+                <button class="label-pos-btn"        data-pos="bottom" title="Below symbol">↓</button>
+              </div>
+            </div>
+            <input type="hidden" id="prop-label-pos" value="top">
+            <div style="display:flex;gap:4px;align-items:center">
+              <input type="text" id="prop-label" placeholder="e.g. 1-12 IN" style="flex:1">
+              <button id="prop-label-add" class="btn-secondary" title="Add another label" style="padding:3px 9px;font-size:16px;line-height:1;flex-shrink:0">+</button>
+            </div>
           </div>
+          <div id="prop-extra-labels"></div>
           <div class="form-group">
             <label>Echelon</label>
             <select id="prop-echelon">

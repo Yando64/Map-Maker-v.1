@@ -28,6 +28,8 @@ function saveOverlay() {
       locked: u.locked !== undefined ? u.locked : true,
       taskForce: u.taskForce || false,
       comms: u.comms || {},
+      labelPosition: u.labelPosition || 'top',
+      extraLabels: u.extraLabels || [],
     })),
     lines: window.lines.map(l => ({
       id: l.id,

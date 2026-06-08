@@ -128,6 +128,8 @@ function placeUnit(latlng, type, overrides = {}, addToHistory = true) {
     status: overrides.status || pending.status || 'known',
     taskForce: overrides.taskForce !== undefined ? overrides.taskForce : (pending.taskForce || false),
     comms: overrides.comms || { fm: '', mmcs: '', cell: '', other: '' },
+    labelPosition: overrides.labelPosition || 'top',
+    extraLabels: overrides.extraLabels || [],
     _marker: null,
   };
 
@@ -476,6 +478,8 @@ function openPropPanel(unit) {
   document.getElementById('props-title').textContent = SYMBOL_TYPES[unit.type]?.label || unit.type;
   document.getElementById('props-coords').textContent = MGRS.fromLatLon(unit.latlng[0], unit.latlng[1]);
   document.getElementById('prop-label').value = unit.label || '';
+  _setLabelPos('label-pos-btns', 'prop-label-pos', unit.labelPosition || 'top');
+  _renderExtraLabels(unit.extraLabels || []);
   document.getElementById('prop-echelon').value = unit.echelon || '';
   document.getElementById('prop-affiliation').value = unit.affiliation || 'friendly';
   document.getElementById('prop-status').value = unit.status || 'known';
@@ -528,6 +532,8 @@ function savePropPanel() {
   if (!unit) return;
   pushHistory();
   unit.label = document.getElementById('prop-label').value;
+  unit.labelPosition = document.getElementById('prop-label-pos').value || 'top';
+  unit.extraLabels = _readExtraLabels();
   unit.echelon = document.getElementById('prop-echelon').value;
   unit.affiliation = document.getElementById('prop-affiliation').value;
   unit.status = document.getElementById('prop-status').value;
@@ -564,6 +570,79 @@ function openLinePropPanel(lineObj) {
   document.getElementById('prop-affiliation').value = '';
   document.getElementById('prop-hq').value = '';
   document.getElementById('prop-notes').value = '';
+}
+
+// ─── Label position helpers ───────────────────────────────────────────────────
+
+function _setLabelPos(groupId, hiddenId, pos) {
+  document.querySelectorAll(`#${groupId} .label-pos-btn`).forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.pos === pos);
+  });
+  document.getElementById(hiddenId).value = pos;
+}
+
+function _wireLabelPosGroup(groupId, hiddenId) {
+  document.querySelectorAll(`#${groupId} .label-pos-btn`).forEach(btn => {
+    btn.addEventListener('click', () => _setLabelPos(groupId, hiddenId, btn.dataset.pos));
+  });
+}
+
+function _renderExtraLabels(extras) {
+  const container = document.getElementById('prop-extra-labels');
+  if (!container) return;
+  container.innerHTML = '';
+  (extras || []).forEach((el, i) => _addExtraLabelRow(el.text || '', el.position || 'top', i));
+}
+
+function _addExtraLabelRow(text, pos, index) {
+  const container = document.getElementById('prop-extra-labels');
+  if (!container) return;
+  const idx = index !== undefined ? index : container.children.length;
+  const groupId = `extra-pos-btns-${idx}`;
+  const hiddenId = `extra-pos-${idx}`;
+
+  const row = document.createElement('div');
+  row.className = 'extra-label-row form-group';
+  row.dataset.extraIdx = idx;
+  row.innerHTML = `
+    <div class="label-field-header">
+      <label style="font-size:11px;color:var(--text-secondary)">Label ${idx + 2}</label>
+      <div class="label-pos-btns" id="${groupId}">
+        <button class="label-pos-btn" data-pos="top"    title="Above symbol">↑</button>
+        <button class="label-pos-btn" data-pos="left"   title="Left of symbol">←</button>
+        <button class="label-pos-btn" data-pos="right"  title="Right of symbol">→</button>
+        <button class="label-pos-btn" data-pos="bottom" title="Below symbol">↓</button>
+      </div>
+    </div>
+    <input type="hidden" id="${hiddenId}" value="${pos}">
+    <div class="extra-label-input-row">
+      <input type="text" class="extra-label-text" placeholder="Additional label" value="${text}" style="flex:1">
+      <button class="extra-label-remove" title="Remove">×</button>
+    </div>`;
+
+  row.querySelector('.extra-label-remove').addEventListener('click', () => {
+    row.remove();
+    _renumberExtraLabels();
+  });
+  container.appendChild(row);
+  _wireLabelPosGroup(groupId, hiddenId);
+  _setLabelPos(groupId, hiddenId, pos);
+}
+
+function _renumberExtraLabels() {
+  document.querySelectorAll('#prop-extra-labels .extra-label-row').forEach((row, i) => {
+    row.querySelector('label').textContent = `Label ${i + 2}`;
+  });
+}
+
+function _readExtraLabels() {
+  const result = [];
+  document.querySelectorAll('#prop-extra-labels .extra-label-row').forEach(row => {
+    const text = row.querySelector('.extra-label-text')?.value?.trim() || '';
+    const pos  = row.querySelector('input[type="hidden"]')?.value || 'top';
+    if (text) result.push({ text, position: pos });
+  });
+  return result;
 }
 
 window.openPropPanel = openPropPanel;
@@ -1060,6 +1139,14 @@ function buildPropsPanel() {
     if (id) deleteUnit(id);
   });
   document.getElementById('props-close')?.addEventListener('click', closePropPanel);
+
+  // Main label position buttons
+  _wireLabelPosGroup('label-pos-btns', 'prop-label-pos');
+
+  // Add extra label
+  document.getElementById('prop-label-add')?.addEventListener('click', () => {
+    _addExtraLabelRow('', 'top');
+  });
 
   // Edit Grid toggle
   document.getElementById('props-edit-grid')?.addEventListener('click', () => {

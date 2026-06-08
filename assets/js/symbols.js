@@ -625,35 +625,77 @@ function shiftSvgY(svgStr, dy) {
 
 // ─── Leaflet marker factory ───────────────────────────────────────────────────
 function createMarker(unit, map) {
-  const size     = getSymbolSize(map.getZoom());
-  const def      = SYMBOL_TYPES[unit.type] || SYMBOL_TYPES['inf-f'];
-  const aff      = unit.affiliation || def.aff || 'friendly';
-  const cfg      = AFF[aff];
-  const svgStr   = buildSymbolSvg(unit, size);
-  // ADP 1-02: unit designation above frame, higher HQ below frame
-  const desig    = unit.label || '';
-  const higherHQ = unit.higherHQ || '';
+  const size = getSymbolSize(map.getZoom());
+  const def  = SYMBOL_TYPES[unit.type] || SYMBOL_TYPES['inf-f'];
+  const aff  = unit.affiliation || def.aff || 'friendly';
+  const cfg  = AFF[aff];
+  const svgStr = buildSymbolSvg(unit, size);
+  const lStyle = `color:${cfg.stroke};font-size:11px;font-weight:600;white-space:nowrap;font-family:'Segoe UI',system-ui,sans-serif;line-height:1.3;`;
+  const mkLabel = (text, extra='') => `<div class="sym-label" style="${lStyle}${extra}">${text}</div>`;
 
-  const echH   = size * 0.28;
-  const desigH = desig    ? 13 : 0;
-  const hqH    = higherHQ ? 13 : 0;
-  let iconW, iconH, anchorX, anchorY;
-
+  // ── noFrame (equipment/installations) ────────────────────────────────────
   if (def.noFrame) {
-    iconW = size * 1.1; iconH = size * 0.8 + hqH;
-    anchorX = iconW/2;  anchorY = size * 0.4;
-  } else {
-    const frame = buildFrame(aff, size, unit.status);
-    iconW   = frame.svgW;
-    iconH   = desigH + frame.svgH + echH + hqH;
-    anchorX = iconW / 2;
-    anchorY = desigH + echH + frame.svgH / 2;  // center of frame
+    const svgW = size * 1.1, svgH = size * 0.8;
+    const allLabels = [];
+    if (unit.label) allLabels.push({ text: unit.label, position: unit.labelPosition || 'top' });
+    (unit.extraLabels || []).forEach(l => { if (l.text) allLabels.push(l); });
+    if (unit.higherHQ) allLabels.push({ text: unit.higherHQ, position: 'bottom' });
+    const botLabels = allLabels.filter(l => l.position === 'bottom');
+    const topLabels = allLabels.filter(l => !['bottom'].includes(l.position)); // everything else above
+    const topH = topLabels.length * 13;
+    const iconW = svgW, iconH = topH + svgH + botLabels.length * 13;
+    const html = `<div class="sym-wrapper${unit.locked===false?' sym-unlocked':''}" id="sym-${unit.id}" data-id="${unit.id}" style="display:flex;flex-direction:column;align-items:center">
+      ${topLabels.map(l=>mkLabel(l.text)).join('')}
+      <div class="sym-svg">${svgStr}</div>
+      ${botLabels.map(l=>mkLabel(l.text)).join('')}
+    </div>`;
+    return L.marker(unit.latlng, {
+      icon: L.divIcon({ html, className:'', iconSize:[iconW, iconH], iconAnchor:[iconW/2, topH + svgH/2] }),
+      draggable: unit.locked === false, title: def.label,
+    });
   }
 
-  const html = `<div class="sym-wrapper${unit.locked === false ? ' sym-unlocked' : ''}" id="sym-${unit.id}" data-id="${unit.id}">
-    ${desig    ? `<div class="sym-label sym-desig" style="color:${cfg.stroke}">${desig}</div>` : ''}
-    <div class="sym-svg">${svgStr}</div>
-    ${higherHQ ? `<div class="sym-label sym-hq"    style="color:${cfg.stroke}">${higherHQ}</div>` : ''}
+  // ── Framed symbols ────────────────────────────────────────────────────────
+  const frame = buildFrame(aff, size, unit.status);
+  const echH  = size * 0.28;  // echelon space at top of svgStr
+  // svgStr height = echH + frame.svgH; frame centre within svgStr = echH + frame.svgH/2
+
+  // Collect all labels by position
+  const allLabels = [];
+  if (unit.label) allLabels.push({ text: unit.label, position: unit.labelPosition || 'top' });
+  (unit.extraLabels || []).forEach(l => { if (l.text) allLabels.push(l); });
+  if (unit.higherHQ) allLabels.push({ text: unit.higherHQ, position: 'bottom' });
+
+  const topL  = allLabels.filter(l => l.position === 'top');
+  const botL  = allLabels.filter(l => l.position === 'bottom');
+  const leftL = allLabels.filter(l => l.position === 'left');
+  const rightL= allLabels.filter(l => l.position === 'right');
+
+  const labelH   = 13;
+  const topH     = topL.length * labelH;
+  const botH     = botL.length * labelH;
+  const sideW    = 60;  // fixed px for side label columns
+  const leftW    = leftL.length  > 0 ? sideW : 0;
+  const rightW   = rightL.length > 0 ? sideW : 0;
+
+  const svgH = frame.svgH + echH;   // total height of the symbol SVG
+  const iconW = leftW + frame.svgW + rightW;
+  const iconH = topH + svgH + botH;
+
+  // Anchor = center of frame within the total icon
+  const anchorX = leftW + frame.svgW / 2;
+  const anchorY = topH  + echH + frame.svgH / 2;
+
+  const sideStyle = 'align-self:center;';
+
+  const html = `<div class="sym-wrapper${unit.locked===false?' sym-unlocked':''}" id="sym-${unit.id}" data-id="${unit.id}" style="display:flex;flex-direction:column;align-items:center">
+    ${topL.map(l => mkLabel(l.text)).join('')}
+    <div style="display:flex;align-items:center">
+      ${leftL.map(l => mkLabel(l.text, `padding:0 4px;${sideStyle}`)).join('')}
+      <div class="sym-svg">${svgStr}</div>
+      ${rightL.map(l => mkLabel(l.text, `padding:0 4px;${sideStyle}`)).join('')}
+    </div>
+    ${botL.map(l => mkLabel(l.text)).join('')}
   </div>`;
 
   return L.marker(unit.latlng, {
