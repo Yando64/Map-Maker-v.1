@@ -485,6 +485,243 @@ function iPassagePoint(cx, cy, fw, fh, s, sz) {
           <line x1="${cx}" y1="${cy-r}" x2="${cx}" y2="${cy+r}" stroke="${s}" stroke-width="${w}"/>`;
 }
 
+// ─── Extended symbol icons from wargaming/briefing reference ─────────────────
+
+// Recon (diagonal slash)
+function iRecon(cx, cy, fw, fh, s, sz) {
+  const mx=fw*0.38, my=fh*0.38, w=lw(sz);
+  return `<line x1="${cx-mx}" y1="${cy+my}" x2="${cx+mx}" y2="${cy-my}" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>`;
+}
+
+// Scout (diagonal slash + small dot)
+function iScout(cx, cy, fw, fh, s, sz) {
+  const mx=fw*0.38, my=fh*0.38, w=lw(sz), r=fw*0.08;
+  return `<line x1="${cx-mx}" y1="${cy+my}" x2="${cx+mx}" y2="${cy-my}" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="${s}"/>`;
+}
+
+// Armored Recon (slash + armor oval)
+function iArmoredRecon(cx, cy, fw, fh, s, sz) {
+  const mx=fw*0.38, my=fh*0.38, w=lw(sz);
+  const rx=fw*0.28, ry=fh*0.2;
+  return `<line x1="${cx-mx}" y1="${cy+my}" x2="${cx+mx}" y2="${cy-my}" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>
+          <ellipse cx="${cx}" cy="${cy+fh*0.05}" rx="${rx}" ry="${ry}" fill="${s}" stroke="${s}" stroke-width="${w*0.5}"/>`;
+}
+
+// Naval Surface (wavy line — ship on water)
+function iNavalSurface(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hw=fw*0.42, hy=fh*0.18;
+  return `<path d="M${cx-hw},${cy+hy} Q${cx-hw*0.5},${cy-hy} ${cx},${cy+hy} Q${cx+hw*0.5},${cy+hy*2.5} ${cx+hw},${cy+hy}"
+          fill="none" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>
+          <line x1="${cx}" y1="${cy-hy*2}" x2="${cx}" y2="${cy-hy*0.5}" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Naval Submarine (hull shape pointing right)
+function iNavalSub(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hw=fw*0.44, hh=fh*0.22;
+  return `<ellipse cx="${cx}" cy="${cy}" rx="${hw}" ry="${hh}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx-hw*0.3}" y1="${cy-hh}" x2="${cx-hw*0.3}" y2="${cy-hh*2.2}" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Air Force Fixed Wing (swept wings)
+function iAirForce(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz);
+  return `<line x1="${cx}" y1="${cy-fh*0.36}" x2="${cx}" y2="${cy+fh*0.36}" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>
+          <line x1="${cx-fw*0.42}" y1="${cy+fh*0.1}" x2="${cx+fw*0.42}" y2="${cy+fh*0.1}" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>
+          <line x1="${cx-fw*0.2}" y1="${cy+fh*0.28}" x2="${cx+fw*0.2}" y2="${cy+fh*0.28}" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>`;
+}
+
+// NBC Nuclear (radioactive trefoil outline)
+function iNuclear(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), r=fw*0.32, ir=fw*0.1;
+  const a120=Math.PI*2/3;
+  let arcs = '';
+  for(let i=0;i<3;i++){
+    const ang=i*a120 - Math.PI/2;
+    const bx=cx+Math.cos(ang)*r*0.5, by=cy+Math.sin(ang)*r*0.5;
+    arcs += `<path d="M${cx+Math.cos(ang-0.5)*ir},${cy+Math.sin(ang-0.5)*ir}
+              A${r},${r} 0 0,1 ${cx+Math.cos(ang+0.5)*ir},${cy+Math.sin(ang+0.5)*ir}"
+              fill="none" stroke="${s}" stroke-width="${w*2.5}"/>`;
+  }
+  return `${arcs}<circle cx="${cx}" cy="${cy}" r="${ir}" fill="${s}"/>`;
+}
+
+// NBC Biological (three overlapping circles — biohazard-ish)
+function iBiological(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), r=fw*0.2;
+  const off=fh*0.12;
+  return `<circle cx="${cx}" cy="${cy-off}" r="${r}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <circle cx="${cx-r*0.85}" cy="${cy+off*0.5}" r="${r}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <circle cx="${cx+r*0.85}" cy="${cy+off*0.5}" r="${r}" fill="none" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// NBC Chemical (cloud/circle with C)
+function iChemical(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), r=fw*0.3;
+  const fs=Math.max(4,sz*0.2);
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <text x="${cx}" y="${cy+fs*0.4}" text-anchor="middle" font-size="${fs}px" fill="${s}" font-family="monospace" font-weight="bold">C</text>`;
+}
+
+// Supply (open box with vertical bar — improved)
+function iSupply(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hw=fw*0.36, hh=fh*0.32;
+  return `<rect x="${cx-hw}" y="${cy-hh}" width="${hw*2}" height="${hh*2}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx}" y1="${cy-hh}" x2="${cx}" y2="${cy+hh}" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Maintenance (wrench shape)
+function iMaintenance(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hw=fw*0.08, hh=fh*0.38;
+  return `<rect x="${cx-hw}" y="${cy-hh}" width="${hw*2}" height="${hh*2}" fill="${s}" rx="${hw}"/>
+          <rect x="${cx-fw*0.24}" y="${cy-hh*0.15}" width="${fw*0.48}" height="${hh*0.3}" fill="${s}"/>`;
+}
+
+// Transportation (wheel + axle)
+function iTransportation(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), r=fw*0.28;
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx-r}" y1="${cy}" x2="${cx+r}" y2="${cy}" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx}" y1="${cy-r}" x2="${cx}" y2="${cy+r}" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Individual troop — dismounted (person silhouette: circle head + line body)
+function iTroop(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hr=fh*0.16, by=cy-fh*0.05;
+  return `<circle cx="${cx}" cy="${cy-fh*0.25}" r="${hr}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx}" y1="${cy-fh*0.09}" x2="${cx}" y2="${by+fh*0.25}" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx-fw*0.22}" y1="${by+fh*0.05}" x2="${cx+fw*0.22}" y2="${by+fh*0.05}" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx-fw*0.18}" y1="${by+fh*0.25}" x2="${cx}" y2="${by+fh*0.12}" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx+fw*0.18}" y1="${by+fh*0.25}" x2="${cx}" y2="${by+fh*0.12}" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Sniper (troop + cross scope)
+function iSniper(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hr=fh*0.14, by=cy-fh*0.05;
+  return `<circle cx="${cx}" cy="${cy-fh*0.25}" r="${hr}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx}" y1="${cy-fh*0.11}" x2="${cx}" y2="${by+fh*0.25}" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx-fw*0.36}" y1="${by+fh*0.02}" x2="${cx+fw*0.36}" y2="${by+fh*0.02}" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx}" y1="${by-fh*0.1}" x2="${cx}" y2="${by+fh*0.14}" stroke="${s}" stroke-width="${w*1.8}"/>`;
+}
+
+// Mortar crew (mortar tube at angle)
+function iMortarCrew(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz);
+  return `<line x1="${cx-fw*0.3}" y1="${cy+fh*0.3}" x2="${cx+fw*0.1}" y2="${cy-fh*0.3}" stroke="${s}" stroke-width="${w*2}" stroke-linecap="round"/>
+          <circle cx="${cx-fw*0.25}" cy="${cy+fh*0.25}" r="${fw*0.09}" fill="${s}"/>`;
+}
+
+// Combat controller (person + radio arc)
+function iCombatController(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hr=fh*0.14, r=fw*0.3;
+  return `<circle cx="${cx}" cy="${cy-fh*0.2}" r="${hr}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx}" y1="${cy-fh*0.06}" x2="${cx}" y2="${cy+fh*0.25}" stroke="${s}" stroke-width="${w}"/>
+          <path d="M${cx-r},${cy-fh*0.35} A${r},${r*0.7} 0 0,1 ${cx+r},${cy-fh*0.35}" fill="none" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Electronic Warfare (lightning bolt in frame)
+function iEW(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hw=fw*0.22, hh=fh*0.38;
+  return `<polyline points="${cx+hw},${cy-hh} ${cx-hw*0.2},${cy-hh*0.1} ${cx+hw*0.5},${cy} ${cx-hw},${cy+hh}"
+          fill="none" stroke="${s}" stroke-width="${w*1.5}" stroke-linejoin="round" stroke-linecap="round"/>`;
+}
+
+// UAV (delta wing)
+function iUAV(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz);
+  return `<polygon points="${cx},${cy-fh*0.35} ${cx+fw*0.44},${cy+fh*0.28} ${cx+fw*0.1},${cy+fh*0.05} ${cx},${cy+fh*0.22} ${cx-fw*0.1},${cy+fh*0.05} ${cx-fw*0.44},${cy+fh*0.28}"
+          fill="none" stroke="${s}" stroke-width="${w}" stroke-linejoin="round"/>`;
+}
+
+// Amphibious (infantry X + wave)
+function iAmphibious(cx, cy, fw, fh, s, sz) {
+  const mx=fw*0.38, my=fh*0.26, w=lw(sz), wy=fh*0.38, hw=fw*0.35;
+  return `<line x1="${cx-mx}" y1="${cy-my}" x2="${cx+mx}" y2="${cy+my*0.5}" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>
+          <line x1="${cx+mx}" y1="${cy-my}" x2="${cx-mx}" y2="${cy+my*0.5}" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>
+          <path d="M${cx-hw},${cy+wy} Q${cx},${cy+wy-fh*0.14} ${cx+hw},${cy+wy}" fill="none" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Horse Cavalry (slash + horseshoe arc)
+function iHorseCav(cx, cy, fw, fh, s, sz) {
+  const mx=fw*0.36, my=fh*0.36, w=lw(sz), r=fw*0.22;
+  return `<line x1="${cx-mx}" y1="${cy+my}" x2="${cx+mx}" y2="${cy-my}" stroke="${s}" stroke-width="${w}" stroke-linecap="round"/>
+          <path d="M${cx-r},${cy-fh*0.08} A${r},${r} 0 0,1 ${cx+r},${cy-fh*0.08}" fill="none" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Anti-aircraft (upward arcs, more pronounced)
+function iAntiAir(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), r1=fw*0.22, r2=fw*0.4;
+  return `<path d="M${cx-r1},${cy+fh*0.1} A${r1},${r1} 0 0,1 ${cx+r1},${cy+fh*0.1}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <path d="M${cx-r2},${cy+fh*0.2} A${r2},${r2} 0 0,1 ${cx+r2},${cy+fh*0.2}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx}" y1="${cy+fh*0.2}" x2="${cx}" y2="${cy-fh*0.3}" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Decontamination (cross + downward arrows)
+function iDecon(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), cr=fw*0.12, aw=fw*0.28;
+  return `<line x1="${cx-cr*2}" y1="${cy}" x2="${cx+cr*2}" y2="${cy}" stroke="${s}" stroke-width="${w*1.5}"/>
+          <line x1="${cx}" y1="${cy-cr*2}" x2="${cx}" y2="${cy+cr*2}" stroke="${s}" stroke-width="${w*1.5}"/>
+          <line x1="${cx-aw}" y1="${cy+fh*0.22}" x2="${cx-aw}" y2="${cy+fh*0.38}" stroke="${s}" stroke-width="${w}"/>
+          <polygon points="${cx-aw},${cy+fh*0.4} ${cx-aw-fw*0.07},${cy+fh*0.28} ${cx-aw+fw*0.07},${cy+fh*0.28}" fill="${s}"/>
+          <line x1="${cx+aw}" y1="${cy+fh*0.22}" x2="${cx+aw}" y2="${cy+fh*0.38}" stroke="${s}" stroke-width="${w}"/>
+          <polygon points="${cx+aw},${cy+fh*0.4} ${cx+aw-fw*0.07},${cy+fh*0.28} ${cx+aw+fw*0.07},${cy+fh*0.28}" fill="${s}"/>`;
+}
+
+// Tactical Operations Center (TOC) — rectangle with diagonal
+function iTOC(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hw=fw*0.38, hh=fh*0.3;
+  const fs=Math.max(4,sz*0.16);
+  return `<rect x="${cx-hw}" y="${cy-hh}" width="${hw*2}" height="${hh*2}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <text x="${cx}" y="${cy+fs*0.4}" text-anchor="middle" font-size="${fs}px" fill="${s}" font-family="monospace" font-weight="bold">TOC</text>`;
+}
+
+// Fire Support (artillery circle with line)
+function iFireSupport(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), r=fw*0.28;
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${s}"/>
+          <line x1="${cx+r}" y1="${cy}" x2="${cx+fw*0.44}" y2="${cy-fh*0.3}" stroke="${s}" stroke-width="${w*1.5}" stroke-linecap="round"/>`;
+}
+
+// Shore Party / Beach (wave + vertical line)
+function iShoreParty(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hw=fw*0.4, wy=fh*0.1;
+  return `<line x1="${cx}" y1="${cy-fh*0.35}" x2="${cx}" y2="${cy+fh*0.35}" stroke="${s}" stroke-width="${w}"/>
+          <path d="M${cx-hw},${cy+wy} Q${cx-hw*0.5},${cy-wy} ${cx},${cy+wy} Q${cx+hw*0.5},${cy+wy*2.5} ${cx+hw},${cy+wy}" fill="none" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Prisoner of War / EPW (P with circle)
+function iEPW(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), r=fw*0.28, fs=Math.max(4,sz*0.22);
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <text x="${cx}" y="${cy+fs*0.38}" text-anchor="middle" font-size="${fs}px" fill="${s}" font-family="monospace" font-weight="bold">P</text>`;
+}
+
+// Bridging / Gap crossing (two lines with bridge)
+function iBridging(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hw=fw*0.4, hy=fh*0.15;
+  return `<line x1="${cx-hw}" y1="${cy-hy}" x2="${cx-hw}" y2="${cy+hy}" stroke="${s}" stroke-width="${w*1.5}" stroke-linecap="round"/>
+          <line x1="${cx+hw}" y1="${cy-hy}" x2="${cx+hw}" y2="${cy+hy}" stroke="${s}" stroke-width="${w*1.5}" stroke-linecap="round"/>
+          <line x1="${cx-hw}" y1="${cy}" x2="${cx+hw}" y2="${cy}" stroke="${s}" stroke-width="${w}"/>
+          <path d="M${cx-hw*0.6},${cy} A${hw*0.6},${fh*0.25} 0 0,0 ${cx+hw*0.6},${cy}" fill="none" stroke="${s}" stroke-width="${w}"/>`;
+}
+
+// Observation Post enhanced (eye shape)
+function iOPEnhanced(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), hw=fw*0.38, hy=fh*0.2;
+  return `<path d="M${cx-hw},${cy} Q${cx},${cy-hy*2} ${cx+hw},${cy} Q${cx},${cy+hy*2} ${cx-hw},${cy} Z" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <circle cx="${cx}" cy="${cy}" r="${fw*0.1}" fill="${s}"/>`;
+}
+
+// JTAC/FAC (person + targeting reticle)
+function iJTAC(cx, cy, fw, fh, s, sz) {
+  const w=lw(sz), r=fw*0.25, hr=fh*0.13;
+  return `<circle cx="${cx}" cy="${cy-fh*0.2}" r="${hr}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx}" y1="${cy-fh*0.07}" x2="${cx}" y2="${cy+fh*0.25}" stroke="${s}" stroke-width="${w}"/>
+          <circle cx="${cx}" cy="${cy+fh*0.05}" r="${r}" fill="none" stroke="${s}" stroke-width="${w}"/>
+          <line x1="${cx-r*1.3}" y1="${cy+fh*0.05}" x2="${cx+r*1.3}" y2="${cy+fh*0.05}" stroke="${s}" stroke-width="${w*0.7}"/>
+          <line x1="${cx}" y1="${cy+fh*0.05-r*1.3}" x2="${cx}" y2="${cy+fh*0.05+r*1.3}" stroke="${s}" stroke-width="${w*0.7}"/>`;
+}
+
 // ─── Symbol Type Registry ─────────────────────────────────────────────────────
 // Organised into tabs: 'formations' | 'tactical' | 'equipment' | 'generic'
 
@@ -536,6 +773,47 @@ const SYMBOL_TYPES = {
   'unk-e':         { label:'Unknown Enemy',      aff:'enemy',    tab:'formations', icon:iUnknown      },
   'sus-e':         { label:'Suspected',          aff:'enemy',    tab:'formations', icon:iSuspected    },
 
+  // Friendly — Recon & Scouts
+  'recon-f':        { label:'Recon',              aff:'friendly', tab:'formations', icon:iRecon        },
+  'scout-f':        { label:'Scout',              aff:'friendly', tab:'formations', icon:iScout        },
+  'armd-recon-f':   { label:'Armored Recon',      aff:'friendly', tab:'formations', icon:iArmoredRecon },
+  'horse-cav-f':    { label:'Horse Cavalry',      aff:'friendly', tab:'formations', icon:iHorseCav     },
+  // Friendly — Amphibious & Special
+  'amphib-f':       { label:'Amphibious',         aff:'friendly', tab:'formations', icon:iAmphibious   },
+  'shore-party-f':  { label:'Shore Party',        aff:'friendly', tab:'formations', icon:iShoreParty   },
+  'uav-f':          { label:'UAV',                aff:'friendly', tab:'formations', icon:iUAV          },
+  'jtac-f':         { label:'JTAC / FAC',         aff:'friendly', tab:'formations', icon:iJTAC         },
+  // Friendly — NBC / CBRN
+  'nbc-nuc-f':      { label:'Nuclear',            aff:'friendly', tab:'formations', icon:iNuclear      },
+  'nbc-bio-f':      { label:'Biological',         aff:'friendly', tab:'formations', icon:iBiological   },
+  'nbc-chem-f':     { label:'Chemical',           aff:'friendly', tab:'formations', icon:iChemical     },
+  'decon-f':        { label:'Decontamination',    aff:'friendly', tab:'formations', icon:iDecon        },
+  // Friendly — Combat Support
+  'ew-f':           { label:'Electronic Warfare', aff:'friendly', tab:'formations', icon:iEW           },
+  'ada2-f':         { label:'Anti-Aircraft',      aff:'friendly', tab:'formations', icon:iAntiAir      },
+  'fs-f':           { label:'Fire Support',       aff:'friendly', tab:'formations', icon:iFireSupport  },
+  'toc-f':          { label:'TOC',                aff:'friendly', tab:'formations', icon:iTOC          },
+  'bridge-f':       { label:'Bridging',           aff:'friendly', tab:'formations', icon:iBridging     },
+  'epw-f':          { label:'EPW / POW',          aff:'friendly', tab:'formations', icon:iEPW          },
+  'maint-f':        { label:'Maintenance',        aff:'friendly', tab:'formations', icon:iMaintenance  },
+  'trans-f':        { label:'Transportation',     aff:'friendly', tab:'formations', icon:iTransportation},
+  'supply-f':       { label:'Supply',             aff:'friendly', tab:'formations', icon:iSupply       },
+  // Friendly — Naval
+  'naval-surf-f':   { label:'Naval Surface',      aff:'friendly', tab:'formations', icon:iNavalSurface },
+  'naval-sub-f':    { label:'Submarine',          aff:'friendly', tab:'formations', icon:iNavalSub     },
+  // Friendly — Air Force
+  'af-f':           { label:'Air Force Unit',     aff:'friendly', tab:'formations', icon:iAirForce     },
+  // Friendly — Individual Troops
+  'troop-f':        { label:'Dismounted Soldier', aff:'friendly', tab:'formations', icon:iTroop        },
+  'sniper-f':       { label:'Sniper',             aff:'friendly', tab:'formations', icon:iSniper       },
+  'mortar-crew-f':  { label:'Mortar Crew',        aff:'friendly', tab:'formations', icon:iMortarCrew   },
+  'cc-f':           { label:'Combat Controller',  aff:'friendly', tab:'formations', icon:iCombatController },
+  'op2-f':          { label:'Observation Post',   aff:'friendly', tab:'formations', icon:iOPEnhanced   },
+  // Enemy — expanded
+  'recon-e':        { label:'Enemy Recon',        aff:'enemy',    tab:'formations', icon:iRecon        },
+  'amphib-e':       { label:'Enemy Amphibious',   aff:'enemy',    tab:'formations', icon:iAmphibious   },
+  'naval-surf-e':   { label:'Enemy Naval',        aff:'enemy',    tab:'formations', icon:iNavalSurface },
+  'nbc-e':          { label:'Enemy NBC',          aff:'enemy',    tab:'formations', icon:iNuclear      },
   // Neutral / Unknown
   'unk-g':         { label:'Unknown Ground',     aff:'unknown',  tab:'formations', icon:iUnknown      },
   'neu-inf':       { label:'Neutral Force',      aff:'neutral',  tab:'formations', icon:iInfantry     },
@@ -555,6 +833,9 @@ const SYMBOL_TYPES = {
   'inst-mtf':       { label:'Medical Facility',  aff:'friendly', tab:'equipment',  icon:iMTF,       noFrame:true },
   'eq-tank-e':     { label:'Enemy Tank',         aff:'enemy',    tab:'equipment',  icon:iTank,      noFrame:true },
   'eq-ifv-e':      { label:'Enemy IFV',          aff:'enemy',    tab:'equipment',  icon:iIFV,       noFrame:true },
+  'eq-uav-f':      { label:'UAV (Equipment)',    aff:'friendly', tab:'equipment',  icon:iUAV,       noFrame:true },
+  'eq-naval-f':    { label:'Naval Vessel',       aff:'friendly', tab:'equipment',  icon:iNavalSurface, noFrame:true },
+  'eq-sub-f':      { label:'Submarine',          aff:'friendly', tab:'equipment',  icon:iNavalSub,  noFrame:true },
 
   // ── TAB 4: GENERIC GRAPHICS ────────────────────────────────────────────────
   'gen-point':     { label:'Point Marker',       aff:'friendly', tab:'generic',    icon:iPointMarker },
