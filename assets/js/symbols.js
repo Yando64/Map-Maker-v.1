@@ -30,7 +30,8 @@
 
 // ─── Scaling ─────────────────────────────────────────────────────────────────
 function getSymbolSize(zoom) {
-  return Math.round(10 + (zoom - 2) * 4.5);
+  const scale = window.symbolSizeScale !== undefined ? window.symbolSizeScale : 1.0;
+  return Math.round((10 + (zoom - 2) * 4.5) * scale);
 }
 
 // ─── Affiliation frames ───────────────────────────────────────────────────────

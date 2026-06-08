@@ -11,6 +11,7 @@ window.appState = {
 };
 
 window.symbolScaleFixed = false;
+window.symbolSizeScale  = 1.0;
 
 window.units = [];
 window.lines = [];
@@ -1128,6 +1129,22 @@ function makeMapTools() {
     btn.title = label;
     btn.onclick = fn;
     body.appendChild(btn);
+  });
+
+  // Symbol size slider
+  const sizeRow = document.createElement('div');
+  sizeRow.className = 'sym-size-row';
+  sizeRow.innerHTML = `
+    <label class="sym-size-label" for="sym-size-slider">Size</label>
+    <input type="range" id="sym-size-slider" min="0.4" max="3.0" step="0.05" value="1.0" class="sym-size-slider">
+    <span id="sym-size-val" class="sym-size-val">1.0×</span>`;
+  body.appendChild(sizeRow);
+
+  sizeRow.querySelector('#sym-size-slider').addEventListener('input', e => {
+    const val = parseFloat(e.target.value);
+    window.symbolSizeScale = val;
+    sizeRow.querySelector('#sym-size-val').textContent = val.toFixed(1) + '×';
+    window.rebuildAllMarkers();
   });
 
   sec.appendChild(header);

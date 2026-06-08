@@ -109,6 +109,38 @@
 }
 .toolbar-section-body.full-width .tool-btn:hover .btn-label { color: var(--accent); }
 
+/* Symbol size slider */
+.sym-size-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 4px;
+  width: 100%;
+  box-sizing: border-box;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+}
+.sym-size-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 28px;
+}
+.sym-size-slider {
+  flex: 1;
+  height: 4px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.sym-size-val {
+  font-size: 11px;
+  color: var(--text-primary);
+  font-weight: 600;
+  min-width: 32px;
+  text-align: right;
+  font-family: 'Courier New', monospace;
+}
+
 /* MAP CONTAINER */
 #map-container {
   flex: 1;
