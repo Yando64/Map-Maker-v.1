@@ -356,11 +356,39 @@ input:focus, textarea:focus, select:focus {
 .sb-check-row label { display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer; }
 .sb-divider { height: 1px; background: var(--border); margin: 2px 0; }
 .sb-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+.sb-mgrs-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 14px 4px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sb-mgrs-row label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  padding-top: 6px;
+  min-width: 110px;
+}
+.sb-mgrs-input-wrap {
+  flex: 1;
+}
+.sb-mgrs-input-wrap input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 12px;
+}
+.sb-mgrs-error {
+  font-size: 10px;
+  color: var(--danger);
+  min-height: 14px;
+  margin-top: 2px;
+}
 .sb-footer {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  padding: 10px 14px;
-  border-top: 1px solid var(--border);
+  padding: 8px 14px 10px;
   flex-shrink: 0;
 }

@@ -261,9 +261,16 @@
 
         </div><!-- /.sb-controls -->
 
+        <div class="sb-mgrs-row">
+          <label for="sb-mgrs-input">MGRS Grid (optional)</label>
+          <div class="sb-mgrs-input-wrap">
+            <input type="text" id="sb-mgrs-input" placeholder="e.g. 18S UJ 12345 67890" autocomplete="off" spellcheck="false">
+            <div id="sb-mgrs-error" class="sb-mgrs-error"></div>
+          </div>
+        </div>
         <div class="sb-footer">
-          <button id="sb-cancel">Cancel</button>
-          <button id="sb-place" class="btn-primary">Place on Map</button>
+          <button type="button" id="sb-cancel">Cancel</button>
+          <button type="button" id="sb-place" class="btn-primary">Place on Map</button>
         </div>
       </div><!-- /.sb-right -->
 

@@ -185,12 +185,18 @@ function _sbWire() {
     });
   });
 
+  // Clear MGRS error on input
+  document.getElementById('sb-mgrs-input')?.addEventListener('input', () => {
+    document.getElementById('sb-mgrs-error').textContent = '';
+  });
+
   // Place on Map
   document.getElementById('sb-place')?.addEventListener('click', () => {
-    const cfg = _sbGetConfig();
+    const cfg      = _sbGetConfig();
+    const mgrsRaw  = (document.getElementById('sb-mgrs-input')?.value || '').trim();
+    const errorEl  = document.getElementById('sb-mgrs-error');
 
-    // Store config; placeUnit will pick it up on next map click
-    window.appState.pendingUnitConfig = {
+    const pendingCfg = {
       affiliation: cfg.affiliation,
       status:      cfg.status,
       echelon:     cfg.echelon,
@@ -199,8 +205,23 @@ function _sbWire() {
       taskForce:   cfg.taskForce,
     };
 
-    closeSymbolBuilder();
-    window.setMode('PLACE', cfg.type);
+    if (mgrsRaw) {
+      // Validate & place immediately at the given MGRS coordinate
+      try {
+        const ll = window.MGRS.toLatLon(mgrsRaw.replace(/\s+/g, ''));
+        if (!ll || ll.lat === undefined) throw new Error('Invalid MGRS');
+        closeSymbolBuilder();
+        window.placeUnit([ll.lat, ll.lon], cfg.type, { ...pendingCfg });
+        window.map.setView([ll.lat, ll.lon], Math.max(window.map.getZoom(), 12));
+      } catch (err) {
+        if (errorEl) errorEl.textContent = 'Invalid MGRS — check format and try again.';
+      }
+    } else {
+      // No grid given — switch to click-to-place mode
+      window.appState.pendingUnitConfig = pendingCfg;
+      closeSymbolBuilder();
+      window.setMode('PLACE', cfg.type);
+    }
   });
 }
 
