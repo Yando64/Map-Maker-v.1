@@ -235,6 +235,13 @@ const LINE_STYLES = {
   'at-ditch':       { color: '#333333', weight: 3,   dashArray: '1,4' },
   'msr':            { color: '#30a030', weight: 2.5, dashArray: null },
   'asr':            { color: '#30a030', weight: 2,   dashArray: '8,4' },
+  // ── Maneuver Arrows ──────────────────────────────────────────────────────────
+  'arrow-attack':   { color: '#e04040', weight: 4,   dashArray: null,  arrow: 'solid' },
+  'arrow-attack-en':{ color: '#e04040', weight: 3,   dashArray: null,  arrow: 'solid' },
+  'arrow-axis':     { color: '#4a90b8', weight: 4,   dashArray: null,  arrow: 'solid' },
+  'arrow-withdraw': { color: '#4a90b8', weight: 2,   dashArray: '7,5', arrow: 'open'  },
+  'arrow-support':  { color: '#4a90b8', weight: 3,   dashArray: null,  arrow: 'open'  },
+  'arrow-maneuver': { color: '#4a90b8', weight: 2,   dashArray: null,  arrow: 'solid' },
 };
 
 const AREA_STYLES = {
@@ -286,6 +293,68 @@ function cancelDrawing() {
   window._drawingPoints = [];
 }
 
+// ─── SVG Arrow Defs ──────────────────────────────────────────────────────────
+// Inject <marker> defs into Leaflet's overlay SVG once, idempotently.
+function _injectArrowDefs() {
+  const svgEl = document.querySelector('.leaflet-overlay-pane > svg');
+  if (!svgEl || svgEl.querySelector('#tactical-arrow-defs')) return;
+  const ns = 'http://www.w3.org/2000/svg';
+  const defs = document.createElementNS(ns, 'defs');
+  defs.id = 'tactical-arrow-defs';
+
+  // Solid filled arrowhead: M0,0 L0,6 L7,3 z  (tip at x=7)
+  // Open chevron arrowhead: M0,0 L7,3 L0,6    (tip at x=7, no fill)
+  const COLORS = {
+    blue:  '#4a90b8',
+    red:   '#e04040',
+    green: '#30a030',
+    dark:  '#333333',
+  };
+
+  Object.entries(COLORS).forEach(([name, color]) => {
+    ['solid', 'open'].forEach(style => {
+      const m = document.createElementNS(ns, 'marker');
+      m.setAttribute('id',          `ah-${name}-${style}`);
+      m.setAttribute('markerWidth',  '7');
+      m.setAttribute('markerHeight', '6');
+      m.setAttribute('refX',         '6');
+      m.setAttribute('refY',         '3');
+      m.setAttribute('orient',       'auto');
+      m.setAttribute('markerUnits',  'strokeWidth');
+
+      const p = document.createElementNS(ns, 'path');
+      if (style === 'solid') {
+        p.setAttribute('d',    'M0,0 L0,6 L7,3 z');
+        p.setAttribute('fill', color);
+      } else {
+        p.setAttribute('d',           'M0,0 L7,3 L0,6');
+        p.setAttribute('fill',        'none');
+        p.setAttribute('stroke',      color);
+        p.setAttribute('stroke-width','1');
+      }
+      m.appendChild(p);
+      defs.appendChild(m);
+    });
+  });
+
+  svgEl.insertBefore(defs, svgEl.firstChild);
+}
+
+// Map a LINE_STYLES color to the closest named color key used in marker IDs.
+function _colorKey(hex) {
+  if (hex === '#4a90b8') return 'blue';
+  if (hex === '#e04040') return 'red';
+  if (hex === '#30a030') return 'green';
+  return 'dark';
+}
+
+// Apply marker-end to a Leaflet polyline's SVG path.
+function _applyArrow(layer, style) {
+  if (!style.arrow || !layer._path) return;
+  const key = `ah-${_colorKey(style.color)}-${style.arrow}`;
+  layer._path.setAttribute('marker-end', `url(#${key})`);
+}
+
 function drawLine(latlngs, lineType, label, overrides = {}, addToHistory = true) {
   const id = overrides.id || 'line-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
   const style = LINE_STYLES[lineType] || LINE_STYLES['phase-line'];
@@ -316,20 +385,21 @@ function drawLine(latlngs, lineType, label, overrides = {}, addToHistory = true)
       weight: style.weight,
       dashArray: style.dashArray,
     });
-
-    // Arrow decoration for axis/dir attack
-    if (lineType === 'axis-advance' || lineType === 'dir-attack') {
-      layer.on('add', () => {
-        const decorator = L.polylineDecorator ? L.polylineDecorator(layer, {
-          patterns: [{ offset: '100%', repeat: 0, symbol: L.Symbol.arrowHead({ pixelSize: 12, polygon: false, pathOptions: { stroke: true, color: style.color, weight: 2 } }) }]
-        }) : null;
-        if (decorator) decorator.addTo(window.map);
-      });
-    }
   }
 
   layer.addTo(window.map);
   lineObj._layer = layer;
+
+  // Apply SVG arrowhead marker-end if this line type requests one
+  if (style.arrow) {
+    _injectArrowDefs();
+    if (layer._path) {
+      _applyArrow(layer, style);
+    } else {
+      // Path not yet rendered (e.g. layer added before SVG pane ready) — defer
+      layer.once('add', () => { _injectArrowDefs(); _applyArrow(layer, style); });
+    }
+  }
 
   // Label popup
   if (lineObj.label && lineType !== 'trp') {
@@ -367,6 +437,7 @@ window.finishLine = finishLine;
 window.cancelDrawing = cancelDrawing;
 window.drawLine = drawLine;
 window.deleteLine = deleteLine;
+window._injectArrowDefs = _injectArrowDefs;
 
 // ─── Polygon / Area Drawing ───────────────────────────────────────────────────
 
@@ -904,11 +975,22 @@ function _lineBody(lines) {
   body.className = 'toolbar-section-body';
   lines.forEach(({ type, label }) => {
     const style = LINE_STYLES[type] || { color: '#888', dashArray: null };
+    const c = style.color;
+    const w = Math.min(style.weight || 2, 3);
+    // Arrow preview icon
+    let arrowSvg = '';
+    if (style.arrow === 'solid') {
+      arrowSvg = `<polygon points="26,7 20,3 20,11" fill="${c}"/>`;
+    } else if (style.arrow === 'open') {
+      arrowSvg = `<polyline points="20,3 26,7 20,11" fill="none" stroke="${c}" stroke-width="1.5"/>`;
+    }
+    const lineEnd = style.arrow ? 20 : 26;
     const btn = document.createElement('button');
     btn.className = 'tool-btn';
     btn.dataset.type = type;
     btn.innerHTML = `<svg width="28" height="14" viewBox="0 0 28 14">
-      <line x1="2" y1="7" x2="26" y2="7" stroke="${style.color}" stroke-width="2" stroke-dasharray="${style.dashArray || 'none'}"/>
+      <line x1="2" y1="7" x2="${lineEnd}" y2="7" stroke="${c}" stroke-width="${w}" stroke-dasharray="${style.dashArray || 'none'}"/>
+      ${arrowSvg}
     </svg><span class="btn-label">${label}</span>`;
     btn.title = label;
     btn.onclick = () => setMode('DRAW_LINE', type);
@@ -943,6 +1025,15 @@ function _areaBody(areas) {
 function _fillTacticalTab(panel) {
   if (!panel) return;
 
+  panel.appendChild(_makeSubSection('Maneuver Arrows', _lineBody([
+    { type: 'arrow-attack',    label: 'Dir of Attack' },
+    { type: 'arrow-attack-en', label: 'Enemy Attack' },
+    { type: 'arrow-axis',      label: 'Axis of Advance' },
+    { type: 'arrow-withdraw',  label: 'Withdrawal' },
+    { type: 'arrow-support',   label: 'Follow & Support' },
+    { type: 'arrow-maneuver',  label: 'General Maneuver' },
+  ]), true));
+
   panel.appendChild(_makeSubSection('Maneuver Control Lines', _lineBody([
     { type: 'phase-line',    label: 'Phase Line' },
     { type: 'loa',           label: 'LOA' },
@@ -954,7 +1045,7 @@ function _fillTacticalTab(panel) {
     { type: 'unit-boundary', label: 'Boundary' },
     { type: 'axis-advance',  label: 'Axis Adv' },
     { type: 'dir-attack',    label: 'Dir Atk' },
-  ]), true));
+  ]), false));
 
   panel.appendChild(_makeSubSection('Maneuver Areas', _areaBody([
     { type: 'objective',          label: 'Objective' },
