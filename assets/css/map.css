@@ -159,14 +159,16 @@
   top: 10px;
   right: 10px;
   width: 240px;
+  max-height: calc(100vh - 110px);
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 4px 20px var(--shadow);
   z-index: 1000;
   display: none;
+  flex-direction: column;
 }
-#props-panel.open { display: block; }
+#props-panel.open { display: flex; }
 .props-header {
   display: flex;
   align-items: center;
@@ -175,6 +177,7 @@
   border-bottom: 1px solid var(--border);
   font-weight: 600;
   font-size: 13px;
+  flex-shrink: 0;
 }
 .props-close {
   background: none;
@@ -189,7 +192,16 @@
   align-items: center;
   justify-content: center;
 }
-.props-body { padding: 12px; }
+.props-body {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.props-body::-webkit-scrollbar { width: 5px; }
+.props-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 .props-body .form-group { margin-bottom: 10px; }
 .props-body label { display: block; margin-bottom: 3px; font-size: 11px; color: var(--text-secondary); }
 .props-body input, .props-body select, .props-body textarea {
@@ -234,6 +246,7 @@
   border-top: 1px solid var(--border);
   display: flex;
   gap: 6px;
+  flex-shrink: 0;
 }
 .props-footer button { flex: 1; font-size: 12px; padding: 5px; }
 
