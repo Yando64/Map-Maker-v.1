@@ -26,6 +26,7 @@ function saveOverlay() {
       notes: u.notes,
       status: u.status || 'known',
       locked: u.locked !== undefined ? u.locked : true,
+      taskForce: u.taskForce || false,
     })),
     lines: window.lines.map(l => ({
       id: l.id,

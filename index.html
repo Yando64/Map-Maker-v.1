@@ -133,6 +133,99 @@
   </div>
 </div>
 
+<!-- SYMBOL BUILDER MODAL -->
+<div id="symbol-builder-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="sb-modal-header">
+      <h3>Symbol Builder</h3>
+      <button id="sb-close" title="Close">✕</button>
+    </div>
+    <div class="sb-body">
+
+      <!-- Left: symbol library -->
+      <div class="sb-left">
+        <div class="sb-search-row">
+          <input type="text" id="sb-search" placeholder="Search symbols…" autocomplete="off">
+        </div>
+        <div id="sb-symbol-list"></div>
+      </div>
+
+      <!-- Right: preview + controls -->
+      <div class="sb-right">
+        <div class="sb-preview-panel">
+          <div id="sb-preview-svg"></div>
+          <div id="sb-preview-desig"></div>
+          <div id="sb-preview-name"></div>
+          <div id="sb-preview-details"></div>
+          <div id="sb-preview-hq"></div>
+        </div>
+
+        <div class="sb-controls">
+
+          <div class="sb-section-label">Affiliation</div>
+          <div class="sb-radio-group" id="sb-aff-group">
+            <label><input type="radio" name="sb-aff" value="friendly" checked><span>Friendly</span></label>
+            <label><input type="radio" name="sb-aff" value="enemy"><span>Enemy</span></label>
+            <label><input type="radio" name="sb-aff" value="neutral"><span>Neutral</span></label>
+            <label><input type="radio" name="sb-aff" value="unknown"><span>Unknown</span></label>
+          </div>
+
+          <div class="sb-divider"></div>
+          <div class="sb-section-label">Status</div>
+          <div class="sb-radio-group">
+            <label><input type="radio" name="sb-status" value="known" checked><span>Known (solid)</span></label>
+            <label><input type="radio" name="sb-status" value="suspected"><span>Suspected (dashed)</span></label>
+          </div>
+
+          <div class="sb-divider"></div>
+          <div class="sb-section-label">Echelon</div>
+          <select id="sb-echelon">
+            <option value="">— None —</option>
+            <option value="team">Team / Crew</option>
+            <option value="squad">Squad</option>
+            <option value="section">Section</option>
+            <option value="platoon">Platoon</option>
+            <option value="company">Company</option>
+            <option value="battalion">Battalion</option>
+            <option value="regiment">Regiment</option>
+            <option value="brigade">Brigade</option>
+            <option value="division">Division</option>
+            <option value="corps">Corps</option>
+          </select>
+
+          <div class="sb-divider"></div>
+          <div class="sb-section-label">Modifiers</div>
+          <div class="sb-check-row">
+            <label><input type="checkbox" id="sb-task-force"> Task Force</label>
+            <label><input type="checkbox" id="sb-reinforced"> Reinforced (+)</label>
+            <label><input type="checkbox" id="sb-reduced"> Reduced (−)</label>
+            <label><input type="checkbox" id="sb-hq-flag"> HQ</label>
+          </div>
+
+          <div class="sb-divider"></div>
+          <div class="sb-row">
+            <div class="sb-field-group">
+              <label>Designation (above)</label>
+              <input type="text" id="sb-desig" placeholder="e.g. 1-12 IN">
+            </div>
+            <div class="sb-field-group">
+              <label>Higher HQ (below)</label>
+              <input type="text" id="sb-hq-text" placeholder="e.g. 3BCT">
+            </div>
+          </div>
+
+        </div><!-- /.sb-controls -->
+
+        <div class="sb-footer">
+          <button id="sb-cancel">Cancel</button>
+          <button id="sb-place" class="btn-primary">Place on Map</button>
+        </div>
+      </div><!-- /.sb-right -->
+
+    </div><!-- /.sb-body -->
+  </div><!-- /.modal -->
+</div>
+
 <!-- OVERLAY LIST MODAL -->
 <div id="overlay-modal" class="modal-overlay">
   <div class="modal">
@@ -160,6 +253,7 @@
 <script src="assets/js/toolbar.js"></script>
 <script src="assets/js/overlay.js"></script>
 <script src="assets/js/export.js"></script>
+<script src="assets/js/builder.js"></script>
 
 <script>
   // ─── Theme & Standard Init ────────────────────────────────────────────────

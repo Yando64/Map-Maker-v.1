@@ -86,6 +86,7 @@ function setMode(mode, subType) {
     mapEl.style.cursor = '';
   }
 
+  if (mode !== 'PLACE') window.appState.pendingUnitConfig = null;
   if (mode !== 'DRAW_LINE') cancelDrawing();
   if (mode !== 'DRAW_POLYGON') cancelPolygonDrawing();
 
@@ -112,17 +113,20 @@ window.setMode = setMode;
 function placeUnit(latlng, type, overrides = {}, addToHistory = true) {
   const id = overrides.id || 'unit-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
   const typeDef = SYMBOL_TYPES[type] || SYMBOL_TYPES['inf-f'];
+  // Merge pending builder config (only for fresh placements, not history restores)
+  const pending = (addToHistory && window.appState.pendingUnitConfig) ? window.appState.pendingUnitConfig : {};
   const unit = {
     id,
     type,
     latlng: Array.isArray(latlng) ? latlng : [latlng.lat, latlng.lng],
-    label: overrides.label || '',
-    echelon: overrides.echelon || '',
-    affiliation: overrides.affiliation || typeDef.aff || 'friendly',
-    higherHQ: overrides.higherHQ || '',
+    label: overrides.label !== undefined ? overrides.label : (pending.label || ''),
+    echelon: overrides.echelon || pending.echelon || '',
+    affiliation: overrides.affiliation || pending.affiliation || typeDef.aff || 'friendly',
+    higherHQ: overrides.higherHQ || pending.higherHQ || '',
     notes: overrides.notes || '',
     locked: overrides.locked !== undefined ? overrides.locked : true,
-    status: overrides.status || 'known',
+    status: overrides.status || pending.status || 'known',
+    taskForce: overrides.taskForce !== undefined ? overrides.taskForce : (pending.taskForce || false),
     _marker: null,
   };
 
@@ -956,6 +960,7 @@ function makeMapTools() {
   body.className = 'toolbar-section-body full-width';
 
   const tools = [
+    { label: 'Symbol Builder', icon: builderIcon(), fn: () => window.openSymbolBuilder && window.openSymbolBuilder() },
     { label: 'Save Overlay', icon: saveIcon(), fn: () => window.saveOverlay() },
     { label: 'Load Overlay', icon: loadIcon(), fn: () => document.getElementById('load-file-input').click() },
     { label: 'GitHub Overlays', icon: githubIcon(), fn: () => window.loadFromGitHub() },
@@ -1337,3 +1342,4 @@ function kmzIcon() { return `<svg width="14" height="14" viewBox="0 0 14 14"><po
 function undoIcon() { return `<svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 6H9a3 3 0 0 1 0 6H6" fill="none" stroke="currentColor" stroke-width="1.5"/><polyline points="3,4 1,6 3,8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`; }
 function redoIcon() { return `<svg width="14" height="14" viewBox="0 0 14 14"><path d="M11 6H5a3 3 0 0 0 0 6h3" fill="none" stroke="currentColor" stroke-width="1.5"/><polyline points="11,4 13,6 11,8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`; }
 function clearIcon() { return `<svg width="14" height="14" viewBox="0 0 14 14"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.5"/></svg>`; }
+function builderIcon() { return `<svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="3" width="8" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="5" x2="7" y2="5" stroke="currentColor" stroke-width="1"/><line x1="3" y1="7" x2="6" y2="7" stroke="currentColor" stroke-width="1"/><circle cx="11" cy="4" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="11" y1="6" x2="11" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`; }

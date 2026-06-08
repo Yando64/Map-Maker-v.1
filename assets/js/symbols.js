@@ -589,8 +589,8 @@ function buildSymbolSvg(unit, size) {
 
   const shiftedFrame = shiftSvgY(frame.shape, echH);
   const iconSvg = def.icon(frame.cx, frame.cy + echH, frame.fw, frame.fh, cfg.stroke, size);
-  const echSvg  = unit.echelon
-    ? echelonSvg(unit.echelon, frame.cx, echH - 2, cfg.stroke, size)
+  const echSvg  = (unit.echelon || unit.taskForce)
+    ? echelonSvg(unit.echelon, frame.cx, echH - 2, cfg.stroke, size, unit.taskForce)
     : '';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" overflow="visible">
@@ -598,11 +598,14 @@ function buildSymbolSvg(unit, size) {
   </svg>`;
 }
 
-function echelonSvg(echelon, cx, y, stroke, size) {
+function echelonSvg(echelon, cx, y, stroke, size, taskForce) {
   const mark = ECHELON_MARKS[echelon];
-  if (!mark) return '';
+  if (!mark && !taskForce) return '';
   const fs = Math.max(8, size * 0.22);
-  return `<text x="${cx}" y="${y}" text-anchor="middle" font-size="${fs}px" font-weight="bold" fill="${stroke}" font-family="monospace">${mark}</text>`;
+  const text = mark
+    ? `<text x="${cx}" y="${y}" text-anchor="middle" font-size="${fs}px" font-weight="bold" fill="${stroke}" font-family="monospace">${taskForce ? '[' + mark + ']' : mark}</text>`
+    : `<text x="${cx}" y="${y}" text-anchor="middle" font-size="${fs}px" font-weight="bold" fill="${stroke}" font-family="monospace">[ ]</text>`;
+  return text;
 }
 
 // Shift all Y-coordinates in an SVG shape string down by dy
