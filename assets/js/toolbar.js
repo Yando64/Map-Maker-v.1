@@ -482,10 +482,11 @@ function openPropPanel(unit) {
   document.getElementById('prop-hq').value = unit.higherHQ || '';
   document.getElementById('prop-notes').value = unit.notes || '';
   const c = unit.comms || {};
-  document.getElementById('prop-comms-fm').value    = c.fm    || '';
-  document.getElementById('prop-comms-mmcs').value  = c.mmcs  || '';
-  document.getElementById('prop-comms-cell').value  = c.cell  || '';
-  document.getElementById('prop-comms-other').value = c.other || '';
+  document.getElementById('prop-comms-callsign').value = c.callsign || '';
+  document.getElementById('prop-comms-fm').value       = c.fm       || '';
+  document.getElementById('prop-comms-mmcs').value     = c.mmcs     || '';
+  document.getElementById('prop-comms-cell').value     = c.cell     || '';
+  document.getElementById('prop-comms-other').value    = c.other    || '';
   // Hide grid editor when opening a new unit
   document.getElementById('props-grid-editor').style.display = 'none';
   const lockBtn = document.getElementById('props-lock-btn');
@@ -532,10 +533,11 @@ function savePropPanel() {
   unit.higherHQ = document.getElementById('prop-hq').value;
   unit.notes = document.getElementById('prop-notes').value;
   unit.comms = {
-    fm:    document.getElementById('prop-comms-fm').value,
-    mmcs:  document.getElementById('prop-comms-mmcs').value,
-    cell:  document.getElementById('prop-comms-cell').value,
-    other: document.getElementById('prop-comms-other').value,
+    callsign: document.getElementById('prop-comms-callsign').value,
+    fm:       document.getElementById('prop-comms-fm').value,
+    mmcs:     document.getElementById('prop-comms-mmcs').value,
+    cell:     document.getElementById('prop-comms-cell').value,
+    other:    document.getElementById('prop-comms-other').value,
   };
 
   // Rebuild marker with new props
