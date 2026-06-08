@@ -64,7 +64,7 @@ function buildFrame(aff, size, status) {
   const cfg  = AFF[aff] || AFF.friendly;
   const sw   = Math.max(1.5, size * 0.06);
   const p    = sw;
-  const dash = status === 'suspected' ? `stroke-dasharray="${sw*2.5},${sw*1.2}"` : '';
+  const dash = status === 'suspected' ? `stroke-dasharray="${sw*0.5},${sw*1.2}" stroke-linecap="round"` : '';
 
   if (cfg.shape === 'rect') {
     const w = size, h = Math.round(size * 0.65);
