@@ -491,6 +491,7 @@ function openPropPanel(unit) {
   document.getElementById('props-grid-editor').style.display = 'none';
   const lockBtn = document.getElementById('props-lock-btn');
   if (lockBtn) {
+    lockBtn.style.display = '';
     lockBtn.textContent = unit.locked !== false ? '🔒 Locked' : '🔓 Unlocked';
   }
 }
