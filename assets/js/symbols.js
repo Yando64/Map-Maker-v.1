@@ -628,7 +628,7 @@ function createMarker(unit, map) {
   const size = getSymbolSize(map.getZoom());
   const def  = SYMBOL_TYPES[unit.type] || SYMBOL_TYPES['inf-f'];
   const aff  = unit.affiliation || def.aff || 'friendly';
-  const cfg  = AFF[aff];
+  const cfg  = AFF[aff] || AFF.friendly;
   const svgStr = buildSymbolSvg(unit, size);
   const lStyle = `color:${cfg.stroke};font-size:11px;font-weight:600;white-space:nowrap;font-family:'Segoe UI',system-ui,sans-serif;line-height:1.3;`;
   const mkLabel = (text, extra='') => `<div class="sym-label" style="${lStyle}${extra}">${text}</div>`;

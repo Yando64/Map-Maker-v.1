@@ -157,6 +157,8 @@ function deleteUnit(id) {
 
 function selectUnit(id) {
   window.selectedUnitId = id;
+  window.selectedPolyId = null;
+  window.selectedLineId = null;
   const unit = window.units.find(u => u.id === id);
   if (!unit) return;
 
@@ -445,6 +447,9 @@ function deletePolygon(id) {
 }
 
 function openPolygonPropPanel(polyObj) {
+  window.selectedPolyId = polyObj.id;
+  window.selectedUnitId = null;
+  window.selectedLineId = null;
   const panel = document.getElementById('props-panel');
   panel.classList.add('open');
   panel.dataset.polyId = polyObj.id;
@@ -508,6 +513,23 @@ function closePropPanel() {
 }
 
 function savePropPanel() {
+  // Handle line label save
+  if (window.selectedLineId) {
+    const lineObj = window.lines.find(l => l.id === window.selectedLineId);
+    if (lineObj) {
+      pushHistory();
+      lineObj.label = document.getElementById('prop-label').value;
+      if (lineObj._layer) {
+        lineObj._layer.unbindTooltip();
+        if (lineObj.label) {
+          lineObj._layer.bindTooltip(lineObj.label, { permanent: true, className: 'line-label', direction: 'center' });
+        }
+      }
+    }
+    closePropPanel();
+    return;
+  }
+
   // Handle polygon label save
   if (window.selectedPolyId) {
     const poly = window.polygons.find(p => p.id === window.selectedPolyId);
@@ -553,6 +575,9 @@ function savePropPanel() {
 }
 
 function openLinePropPanel(lineObj) {
+  window.selectedLineId = lineObj.id;
+  window.selectedUnitId = null;
+  window.selectedPolyId = null;
   const panel = document.getElementById('props-panel');
   panel.classList.add('open');
   panel.dataset.lineId = lineObj.id;
