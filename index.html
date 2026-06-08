@@ -58,7 +58,20 @@
           <button class="props-close" id="props-close">✕</button>
         </div>
         <div class="props-body">
-          <div class="props-coords" id="props-coords"></div>
+          <div class="props-coords-row">
+            <div class="props-coords" id="props-coords"></div>
+            <button id="props-edit-grid" class="btn-secondary props-edit-grid-btn" title="Move symbol to a specific MGRS grid">Edit Grid</button>
+          </div>
+          <div id="props-grid-editor" style="display:none">
+            <div class="form-group">
+              <label>MGRS Coordinate</label>
+              <div style="display:flex;gap:6px">
+                <input type="text" id="prop-mgrs-input" placeholder="e.g. 18S UJ 12345 67890" style="flex:1">
+                <button id="prop-mgrs-go" class="btn-primary" style="white-space:nowrap">Move</button>
+              </div>
+              <div id="prop-mgrs-error" style="font-size:11px;color:var(--danger);margin-top:3px;display:none"></div>
+            </div>
+          </div>
           <div class="form-group">
             <label>Callsign / Label</label>
             <input type="text" id="prop-label" placeholder="e.g. 1-12 IN">
@@ -102,6 +115,25 @@
           <div class="form-group">
             <label>Notes</label>
             <textarea id="prop-notes" placeholder="Optional notes…"></textarea>
+          </div>
+
+          <!-- Comms Section -->
+          <div class="props-section-divider">Comms</div>
+          <div class="form-group">
+            <label>FM</label>
+            <input type="text" id="prop-comms-fm" placeholder="e.g. 46.550">
+          </div>
+          <div class="form-group">
+            <label>MMCS ID</label>
+            <input type="text" id="prop-comms-mmcs" placeholder="e.g. HQ-01">
+          </div>
+          <div class="form-group">
+            <label>Cell</label>
+            <input type="text" id="prop-comms-cell" placeholder="e.g. +1 555 000 0000">
+          </div>
+          <div class="form-group">
+            <label>Other</label>
+            <input type="text" id="prop-comms-other" placeholder="e.g. SATCOM / PACE">
           </div>
         </div>
         <div class="props-footer">

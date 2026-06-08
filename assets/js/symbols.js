@@ -350,12 +350,13 @@ function iRanger(cx, cy, fw, fh, s, sz) {
 
 // ─── Track / wheel decorators ─────────────────────────────────────────────────
 function iTrackBelow(cx, cy, fw, fh, s, sz) {
-  const w=lw(sz)*0.8, oy=cy+fh*0.62;
-  return `<ellipse cx="${cx}" cy="${oy}" rx="${fw*0.3}" ry="${fh*0.1}" fill="none" stroke="${s}" stroke-width="${w}"/>`;
+  // Track oval sits inside the lower portion of the frame
+  const w=lw(sz)*0.9, oy=cy+fh*0.22;
+  return `<ellipse cx="${cx}" cy="${oy}" rx="${fw*0.32}" ry="${fh*0.13}" fill="${s}" fill-opacity="0.25" stroke="${s}" stroke-width="${w}"/>`;
 }
 function iWheelBelow(cx, cy, fw, fh, s, sz) {
-  const w=lw(sz)*0.8, oy=cy+fh*0.58;
-  return `<circle cx="${cx}" cy="${oy}" r="${fh*0.12}" fill="none" stroke="${s}" stroke-width="${w}"/>`;
+  const w=lw(sz)*0.9, oy=cy+fh*0.24;
+  return `<circle cx="${cx}" cy="${oy}" r="${fh*0.14}" fill="none" stroke="${s}" stroke-width="${w}"/>`;
 }
 
 // ─── Equipment / Installation icons (point features, no frame) ───────────────

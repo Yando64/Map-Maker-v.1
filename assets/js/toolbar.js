@@ -127,6 +127,7 @@ function placeUnit(latlng, type, overrides = {}, addToHistory = true) {
     locked: overrides.locked !== undefined ? overrides.locked : true,
     status: overrides.status || pending.status || 'known',
     taskForce: overrides.taskForce !== undefined ? overrides.taskForce : (pending.taskForce || false),
+    comms: overrides.comms || { fm: '', mmcs: '', cell: '', other: '' },
     _marker: null,
   };
 
@@ -480,6 +481,13 @@ function openPropPanel(unit) {
   document.getElementById('prop-status').value = unit.status || 'known';
   document.getElementById('prop-hq').value = unit.higherHQ || '';
   document.getElementById('prop-notes').value = unit.notes || '';
+  const c = unit.comms || {};
+  document.getElementById('prop-comms-fm').value    = c.fm    || '';
+  document.getElementById('prop-comms-mmcs').value  = c.mmcs  || '';
+  document.getElementById('prop-comms-cell').value  = c.cell  || '';
+  document.getElementById('prop-comms-other').value = c.other || '';
+  // Hide grid editor when opening a new unit
+  document.getElementById('props-grid-editor').style.display = 'none';
   const lockBtn = document.getElementById('props-lock-btn');
   if (lockBtn) {
     lockBtn.textContent = unit.locked !== false ? '🔒 Locked' : '🔓 Unlocked';
@@ -523,6 +531,12 @@ function savePropPanel() {
   unit.status = document.getElementById('prop-status').value;
   unit.higherHQ = document.getElementById('prop-hq').value;
   unit.notes = document.getElementById('prop-notes').value;
+  unit.comms = {
+    fm:    document.getElementById('prop-comms-fm').value,
+    mmcs:  document.getElementById('prop-comms-mmcs').value,
+    cell:  document.getElementById('prop-comms-cell').value,
+    other: document.getElementById('prop-comms-other').value,
+  };
 
   // Rebuild marker with new props
   if (unit._marker) window.map.removeLayer(unit._marker);
@@ -645,12 +659,22 @@ function buildToolbar() {
   toolbar.appendChild(makeSearchSection());
 
   // Tools section
-  toolbar.appendChild(makeSection('Tools', [
-    { label: 'Select', icon: cursorIcon(), mode: 'SELECT' },
-    { label: 'Place', icon: crosshairIcon(), mode: 'PLACE' },
-    { label: 'Draw Line', icon: penIcon(), mode: 'DRAW_LINE' },
-    { label: 'Delete', icon: trashIcon(), mode: 'DELETE' },
-  ], 'tools', true));
+  const toolsSec = makeSection('Tools', [
+    { label: 'Select',    icon: cursorIcon(), mode: 'SELECT'    },
+    { label: 'Draw Line', icon: penIcon(),    mode: 'DRAW_LINE' },
+    { label: 'Delete',    icon: trashIcon(),  mode: 'DELETE'    },
+  ], 'tools', true);
+
+  // Insert Symbol Builder button right after Select
+  const toolsBody = toolsSec.querySelector('.toolbar-section-body');
+  const sbBtn = document.createElement('button');
+  sbBtn.className = 'tool-btn';
+  sbBtn.innerHTML = `${builderIcon()}<span class="btn-label">Symbol Builder</span>`;
+  sbBtn.title = 'Open Symbol Builder';
+  sbBtn.onclick = () => window.openSymbolBuilder && window.openSymbolBuilder();
+  // Insert as second child (after Select)
+  toolsBody.insertBefore(sbBtn, toolsBody.children[1]);
+  toolbar.appendChild(toolsSec);
 
   // 4-tab symbol panel
   toolbar.appendChild(makeSymbolTabs());
@@ -1033,6 +1057,40 @@ function buildPropsPanel() {
     if (id) deleteUnit(id);
   });
   document.getElementById('props-close')?.addEventListener('click', closePropPanel);
+
+  // Edit Grid toggle
+  document.getElementById('props-edit-grid')?.addEventListener('click', () => {
+    const editor = document.getElementById('props-grid-editor');
+    const isOpen = editor.style.display !== 'none';
+    editor.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+      const unit = window.units.find(u => u.id === window.selectedUnitId);
+      if (unit) document.getElementById('prop-mgrs-input').value = MGRS.fromLatLon(unit.latlng[0], unit.latlng[1]);
+      document.getElementById('prop-mgrs-error').style.display = 'none';
+      document.getElementById('prop-mgrs-input').focus();
+    }
+  });
+
+  document.getElementById('prop-mgrs-go')?.addEventListener('click', () => {
+    const unit = window.units.find(u => u.id === window.selectedUnitId);
+    if (!unit) return;
+    const raw = document.getElementById('prop-mgrs-input').value.trim();
+    const errEl = document.getElementById('prop-mgrs-error');
+    try {
+      const ll = MGRS.toLatLon(raw);
+      if (!ll) throw new Error('Invalid MGRS');
+      pushHistory();
+      unit.latlng = [ll.lat, ll.lon];
+      if (unit._marker) unit._marker.setLatLng([ll.lat, ll.lon]);
+      document.getElementById('props-coords').textContent = MGRS.fromLatLon(ll.lat, ll.lon);
+      document.getElementById('props-grid-editor').style.display = 'none';
+      errEl.style.display = 'none';
+      window.map.panTo([ll.lat, ll.lon]);
+    } catch {
+      errEl.textContent = 'Could not parse MGRS — check format and try again.';
+      errEl.style.display = 'block';
+    }
+  });
 }
 
 // ─── Symbol Search + MGRS Place ──────────────────────────────────────────────
