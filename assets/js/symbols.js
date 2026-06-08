@@ -625,7 +625,7 @@ function shiftSvgY(svgStr, dy) {
 
 // ─── Leaflet marker factory ───────────────────────────────────────────────────
 function createMarker(unit, map) {
-  const size = getSymbolSize(map.getZoom());
+  const size = (window.symbolScaleFixed && unit.fixedSize) ? unit.fixedSize : getSymbolSize(map.getZoom());
   const def  = SYMBOL_TYPES[unit.type] || SYMBOL_TYPES['inf-f'];
   const aff  = unit.affiliation || def.aff || 'friendly';
   const cfg  = AFF[aff] || AFF.friendly;

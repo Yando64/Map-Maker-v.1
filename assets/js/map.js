@@ -61,7 +61,7 @@ function initMap() {
 
   map.on('zoomend', () => {
     document.getElementById('status-zoom').textContent = map.getZoom();
-    rebuildAllMarkers();
+    if (!window.symbolScaleFixed) rebuildAllMarkers();
   });
 
   map.on('click', e => {
@@ -94,7 +94,6 @@ function rebuildAllMarkers() {
     }
   });
 }
-
 function attachMarkerEvents(marker, unit) {
   marker.on('click', e => {
     L.DomEvent.stopPropagation(e);

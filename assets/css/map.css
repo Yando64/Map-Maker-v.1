@@ -152,6 +152,23 @@
 }
 .status-item span { color: var(--text-primary); margin-left: 4px; font-weight: 600; }
 #status-mode span { color: var(--accent); }
+.status-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  padding: 1px 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.status-toggle.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.status-toggle:hover { opacity: 0.8; }
 
 /* PROPERTIES PANEL */
 #props-panel {

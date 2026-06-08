@@ -30,6 +30,7 @@ function saveOverlay() {
       comms: u.comms || {},
       labelPosition: u.labelPosition || 'top',
       extraLabels: u.extraLabels || [],
+      fixedSize: u.fixedSize || null,
     })),
     lines: window.lines.map(l => ({
       id: l.id,

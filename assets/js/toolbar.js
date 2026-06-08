@@ -10,6 +10,8 @@ window.appState = {
   drawLineType: null,
 };
 
+window.symbolScaleFixed = false;
+
 window.units = [];
 window.lines = [];
 window.selectedUnitId = null;
@@ -115,6 +117,7 @@ function placeUnit(latlng, type, overrides = {}, addToHistory = true) {
   const typeDef = SYMBOL_TYPES[type] || SYMBOL_TYPES['inf-f'];
   // Merge pending builder config (only for fresh placements, not history restores)
   const pending = (addToHistory && window.appState.pendingUnitConfig) ? window.appState.pendingUnitConfig : {};
+  const currentSize = window.getSymbolSize ? window.getSymbolSize(window.map?.getZoom() || 7) : 32;
   const unit = {
     id,
     type,
@@ -130,6 +133,7 @@ function placeUnit(latlng, type, overrides = {}, addToHistory = true) {
     comms: overrides.comms || { fm: '', mmcs: '', cell: '', other: '' },
     labelPosition: overrides.labelPosition || 'top',
     extraLabels: overrides.extraLabels || [],
+    fixedSize: overrides.fixedSize || currentSize,
     _marker: null,
   };
 
@@ -752,6 +756,23 @@ document.addEventListener('DOMContentLoaded', () => {
   buildContextMenu();
   buildPropsPanel();
   pushHistory(); // Initial state
+
+  // Symbol scale toggle
+  const scaleBtn = document.getElementById('scale-toggle');
+  if (scaleBtn) {
+    scaleBtn.addEventListener('click', () => {
+      window.symbolScaleFixed = !window.symbolScaleFixed;
+      scaleBtn.classList.toggle('active', !window.symbolScaleFixed);
+      scaleBtn.textContent = window.symbolScaleFixed ? '⊟ Fixed Size' : '⊞ Scale with Zoom';
+      // When switching to fixed: capture current size for any units that don't have one
+      if (window.symbolScaleFixed && window.map) {
+        const sz = window.getSymbolSize(window.map.getZoom());
+        window.units.forEach(u => { if (!u.fixedSize) u.fixedSize = sz; });
+      }
+      // Always rebuild so markers reflect new sizing mode immediately
+      window.rebuildAllMarkers();
+    });
+  }
 });
 
 function buildToolbar() {
