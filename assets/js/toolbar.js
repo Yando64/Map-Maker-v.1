@@ -122,6 +122,7 @@ function placeUnit(latlng, type, overrides = {}, addToHistory = true) {
     higherHQ: overrides.higherHQ || '',
     notes: overrides.notes || '',
     locked: overrides.locked !== undefined ? overrides.locked : true,
+    status: overrides.status || 'known',
     _marker: null,
   };
 
@@ -472,6 +473,7 @@ function openPropPanel(unit) {
   document.getElementById('prop-label').value = unit.label || '';
   document.getElementById('prop-echelon').value = unit.echelon || '';
   document.getElementById('prop-affiliation').value = unit.affiliation || 'friendly';
+  document.getElementById('prop-status').value = unit.status || 'known';
   document.getElementById('prop-hq').value = unit.higherHQ || '';
   document.getElementById('prop-notes').value = unit.notes || '';
   const lockBtn = document.getElementById('props-lock-btn');
@@ -514,6 +516,7 @@ function savePropPanel() {
   unit.label = document.getElementById('prop-label').value;
   unit.echelon = document.getElementById('prop-echelon').value;
   unit.affiliation = document.getElementById('prop-affiliation').value;
+  unit.status = document.getElementById('prop-status').value;
   unit.higherHQ = document.getElementById('prop-hq').value;
   unit.notes = document.getElementById('prop-notes').value;
 

@@ -34,47 +34,67 @@ function getSymbolSize(zoom) {
 }
 
 // ─── Affiliation frames ───────────────────────────────────────────────────────
+// MIL-STD-2525D Appendix A standard identity colors
 const AFF = {
-  friendly: { stroke: '#4a90b8', fill: 'rgba(128,224,255,0.18)', shape: 'rect'    },
-  enemy:    { stroke: '#e04040', fill: 'rgba(255,128,128,0.18)', shape: 'diamond' },
-  neutral:  { stroke: '#9c7a3a', fill: 'rgba(255,220,100,0.15)', shape: 'square'  },
-  unknown:  { stroke: '#7c4aad', fill: 'rgba(196,128,255,0.15)', shape: 'diamond' },
+  friendly: { stroke: '#004B8D', fill: 'rgba(0,176,240,0.18)',  shape: 'rect'    },
+  enemy:    { stroke: '#C80000', fill: 'rgba(255,80,80,0.18)',   shape: 'diamond' },
+  neutral:  { stroke: '#006B00', fill: 'rgba(0,192,0,0.18)',    shape: 'square'  },
+  unknown:  { stroke: '#A09000', fill: 'rgba(255,240,0,0.20)',  shape: 'rounded' },
 };
 
 // ─── Echelon marks ────────────────────────────────────────────────────────────
+// Correct ADP 1-02 / MIL-STD-2525D echelon marks above frame
 const ECHELON_MARKS = {
-  team: '·', squad: '··', section: '···',
-  platoon: '|', company: '||', battalion: '|||',
-  regiment: 'X', brigade: 'XX', division: 'XXX', corps: 'XXXX',
+  team:      '°',
+  squad:     '·',
+  section:   '··',
+  platoon:   '···',
+  company:   '|',
+  battalion: '||',
+  regiment:  '|||',
+  brigade:   'X',
+  division:  'XX',
+  corps:     'XXX',
+  army:      'XXXX',
 };
 
 // ─── Frame geometry ───────────────────────────────────────────────────────────
-function buildFrame(aff, size) {
-  const cfg = AFF[aff] || AFF.friendly;
-  const sw  = Math.max(1.5, size * 0.06);
-  const p   = sw;
+// status: 'known' (solid) | 'suspected' (dashed) per MIL-STD-2525D
+function buildFrame(aff, size, status) {
+  const cfg  = AFF[aff] || AFF.friendly;
+  const sw   = Math.max(1.5, size * 0.06);
+  const p    = sw;
+  const dash = status === 'suspected' ? `stroke-dasharray="${sw*2.5},${sw*1.2}"` : '';
 
   if (cfg.shape === 'rect') {
     const w = size, h = Math.round(size * 0.65);
     return { svgW: w+p*2, svgH: h+p*2, shape:
       `<rect x="${p}" y="${p}" width="${w}" height="${h}" rx="2"
-       fill="${cfg.fill}" stroke="${cfg.stroke}" stroke-width="${sw}"/>`,
-      cx: p+w/2, cy: p+h/2, fw: w, fh: h, frameX: p, frameY: p };
+       fill="${cfg.fill}" stroke="${cfg.stroke}" stroke-width="${sw}" ${dash}/>`,
+      cx: p+w/2, cy: p+h/2, fw: w, fh: h };
   }
   if (cfg.shape === 'diamond') {
     const w = size, h = Math.round(size*0.78);
     const cx = p+w/2, cy = p+h/2;
     return { svgW: w+p*2, svgH: h+p*2, shape:
       `<polygon points="${cx},${p} ${p+w},${cy} ${cx},${p+h} ${p},${cy}"
-       fill="${cfg.fill}" stroke="${cfg.stroke}" stroke-width="${sw}"/>`,
-      cx, cy, fw: w, fh: h, frameX: p, frameY: p };
+       fill="${cfg.fill}" stroke="${cfg.stroke}" stroke-width="${sw}" ${dash}/>`,
+      cx, cy, fw: w, fh: h };
   }
-  // square (neutral)
+  if (cfg.shape === 'rounded') {
+    // Unknown: rounded rectangle (yellow) per MIL-STD-2525D
+    const w = size, h = Math.round(size * 0.65);
+    return { svgW: w+p*2, svgH: h+p*2, shape:
+      `<rect x="${p}" y="${p}" width="${w}" height="${h}" rx="${Math.round(size*0.18)}"
+       fill="${cfg.fill}" stroke="${cfg.stroke}" stroke-width="${sw}" ${dash}/>`,
+      cx: p+w/2, cy: p+h/2, fw: w, fh: h };
+  }
+  // square (neutral) — unrotated square, green
   const w = size;
   return { svgW: w+p*2, svgH: w+p*2, shape:
     `<rect x="${p}" y="${p}" width="${w}" height="${w}"
-     fill="${cfg.fill}" stroke="${cfg.stroke}" stroke-width="${sw}"/>`,
-    cx: p+w/2, cy: p+w/2, fw: w, fh: w, frameX: p, frameY: p };
+     fill="${cfg.fill}" stroke="${cfg.stroke}" stroke-width="${sw}" ${dash}/>`,
+    cx: p+w/2, cy: p+w/2, fw: w, fh: w };
 }
 
 // ─── Icon library ─────────────────────────────────────────────────────────────
@@ -238,12 +258,11 @@ function iAntiArmor(cx, cy, fw, fh, s, sz) {
           fill="${s}" stroke="none"/>`;
 }
 
-// Airborne – infantry X + parachute arc below
+// Airborne – infantry X with filled parachute dome above X (per ADP 1-02)
 function iAirborne(cx, cy, fw, fh, s, sz) {
-  return iInfantry(cx, cy-fh*0.1, fw, fh*0.7, s, sz) +
-    `<path d="M${cx-fw*0.32},${cy+fh*0.22} A${fw*0.32},${fh*0.25} 0 0,1 ${cx+fw*0.32},${cy+fh*0.22}" fill="none" stroke="${s}" stroke-width="${lw(sz)}"/>
-     <line x1="${cx-fw*0.32}" y1="${cy+fh*0.22}" x2="${cx-fw*0.1}" y2="${cy+fh*0.38}" stroke="${s}" stroke-width="${lw(sz)}"/>
-     <line x1="${cx+fw*0.32}" y1="${cy+fh*0.22}" x2="${cx+fw*0.1}" y2="${cy+fh*0.38}" stroke="${s}" stroke-width="${lw(sz)}"/>`;
+  const yShift = fh * 0.14;
+  return iInfantry(cx, cy + yShift, fw, fh * 0.65, s, sz) +
+    `<path d="M${cx-fw*0.34},${cy-fh*0.06} A${fw*0.34},${fh*0.3} 0 0,1 ${cx+fw*0.34},${cy-fh*0.06}" fill="${s}" stroke="none"/>`;
 }
 
 // Air Assault – infantry X + rotor arc above center
@@ -563,12 +582,11 @@ function buildSymbolSvg(unit, size) {
     </svg>`;
   }
 
-  const frame   = buildFrame(aff, size);
+  const frame   = buildFrame(aff, size, unit.status);
   const echH    = size * 0.28;
   const totalW  = frame.svgW;
   const totalH  = frame.svgH + echH;
 
-  // Shift frame down by echH
   const shiftedFrame = shiftSvgY(frame.shape, echH);
   const iconSvg = def.icon(frame.cx, frame.cy + echH, frame.fw, frame.fh, cfg.stroke, size);
   const echSvg  = unit.echelon
@@ -603,28 +621,35 @@ function shiftSvgY(svgStr, dy) {
 
 // ─── Leaflet marker factory ───────────────────────────────────────────────────
 function createMarker(unit, map) {
-  const size   = getSymbolSize(map.getZoom());
-  const def    = SYMBOL_TYPES[unit.type] || SYMBOL_TYPES['inf-f'];
-  const aff    = unit.affiliation || def.aff || 'friendly';
-  const cfg    = AFF[aff];
-  const svgStr = buildSymbolSvg(unit, size);
-  const label  = unit.label || '';
+  const size     = getSymbolSize(map.getZoom());
+  const def      = SYMBOL_TYPES[unit.type] || SYMBOL_TYPES['inf-f'];
+  const aff      = unit.affiliation || def.aff || 'friendly';
+  const cfg      = AFF[aff];
+  const svgStr   = buildSymbolSvg(unit, size);
+  // ADP 1-02: unit designation above frame, higher HQ below frame
+  const desig    = unit.label || '';
+  const higherHQ = unit.higherHQ || '';
 
-  const echH  = size * 0.28;
+  const echH   = size * 0.28;
+  const desigH = desig    ? 13 : 0;
+  const hqH    = higherHQ ? 13 : 0;
   let iconW, iconH, anchorX, anchorY;
 
   if (def.noFrame) {
-    iconW = size * 1.1; iconH = size * 0.8;
-    anchorX = iconW/2; anchorY = iconH/2;
+    iconW = size * 1.1; iconH = size * 0.8 + hqH;
+    anchorX = iconW/2;  anchorY = size * 0.4;
   } else {
-    const frame = buildFrame(aff, size);
-    iconW = frame.svgW; iconH = frame.svgH + echH + (label ? 14 : 0);
-    anchorX = iconW/2; anchorY = frame.svgH/2 + echH;
+    const frame = buildFrame(aff, size, unit.status);
+    iconW   = frame.svgW;
+    iconH   = desigH + frame.svgH + echH + hqH;
+    anchorX = iconW / 2;
+    anchorY = desigH + echH + frame.svgH / 2;  // center of frame
   }
 
   const html = `<div class="sym-wrapper${unit.locked === false ? ' sym-unlocked' : ''}" id="sym-${unit.id}" data-id="${unit.id}">
+    ${desig    ? `<div class="sym-label sym-desig" style="color:${cfg.stroke}">${desig}</div>` : ''}
     <div class="sym-svg">${svgStr}</div>
-    ${label ? `<div class="sym-label" style="color:${cfg.stroke}">${label}</div>` : ''}
+    ${higherHQ ? `<div class="sym-label sym-hq"    style="color:${cfg.stroke}">${higherHQ}</div>` : ''}
   </div>`;
 
   return L.marker(unit.latlng, {

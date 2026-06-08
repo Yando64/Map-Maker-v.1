@@ -24,6 +24,8 @@ function saveOverlay() {
       affiliation: u.affiliation,
       higherHQ: u.higherHQ,
       notes: u.notes,
+      status: u.status || 'known',
+      locked: u.locked !== undefined ? u.locked : true,
     })),
     lines: window.lines.map(l => ({
       id: l.id,
