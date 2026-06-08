@@ -671,29 +671,37 @@ function createMarker(unit, map) {
   const leftL = allLabels.filter(l => l.position === 'left');
   const rightL= allLabels.filter(l => l.position === 'right');
 
-  const labelH   = 13;
-  const topH     = topL.length * labelH;
-  const botH     = botL.length * labelH;
-  const sideW    = 60;  // fixed px for side label columns
-  const leftW    = leftL.length  > 0 ? sideW : 0;
-  const rightW   = rightL.length > 0 ? sideW : 0;
+  const labelH = 13;
+  const topH   = topL.length  * labelH;
+  const botH   = botL.length  * labelH;
+  const sideW  = 60;
+  const leftW  = leftL.length  > 0 ? sideW : 0;
+  const rightW = rightL.length > 0 ? sideW : 0;
 
-  const svgH = frame.svgH + echH;   // total height of the symbol SVG
+  const svgH  = frame.svgH + echH;  // full SVG height (includes echelon area)
   const iconW = leftW + frame.svgW + rightW;
   const iconH = topH + svgH + botH;
 
-  // Anchor = center of frame within the total icon
+  // Anchor = center of the frame (not the echelon area above it)
   const anchorX = leftW + frame.svgW / 2;
   const anchorY = topH  + echH + frame.svgH / 2;
 
-  const sideStyle = 'align-self:center;';
+  // Side labels must align to the frame center, not the SVG center.
+  // The frame centre within the SVG is at (echH + frame.svgH/2).
+  // The SVG sits in a flex row; use padding-top to push side labels down
+  // so their midpoint lines up with the frame midpoint.
+  const sideLabelCount = Math.max(leftL.length, rightL.length);
+  const sideTotalH = sideLabelCount * labelH;
+  // distance from top of SVG to frame centre, minus half the side-label block
+  const sidePadTop = Math.max(0, echH + (frame.svgH - sideTotalH) / 2);
+  const sideStyle  = `padding:0 4px;align-self:flex-start;margin-top:${sidePadTop.toFixed(1)}px;`;
 
   const html = `<div class="sym-wrapper${unit.locked===false?' sym-unlocked':''}" id="sym-${unit.id}" data-id="${unit.id}" style="display:flex;flex-direction:column;align-items:center">
     ${topL.map(l => mkLabel(l.text)).join('')}
-    <div style="display:flex;align-items:center">
-      ${leftL.map(l => mkLabel(l.text, `padding:0 4px;${sideStyle}`)).join('')}
+    <div style="display:flex;align-items:flex-start">
+      ${leftL.map(l => mkLabel(l.text, sideStyle)).join('')}
       <div class="sym-svg">${svgStr}</div>
-      ${rightL.map(l => mkLabel(l.text, `padding:0 4px;${sideStyle}`)).join('')}
+      ${rightL.map(l => mkLabel(l.text, sideStyle)).join('')}
     </div>
     ${botL.map(l => mkLabel(l.text)).join('')}
   </div>`;
