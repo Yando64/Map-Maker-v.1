@@ -96,11 +96,17 @@ function exportGeoJSON() {
         type: 'LineString',
         coordinates: l.latlngs.map(p => [p[1] || p.lng, p[0] || p.lat]),
       },
-      properties: {
-        id: l.id,
-        lineType: l.lineType,
-        label: l.label,
-      },
+      properties: { id: l.id, lineType: l.lineType, label: l.label },
+    });
+  });
+
+  (window.polygons || []).forEach(p => {
+    const coords = p.latlngs.map(pt => [pt[1] || pt.lng, pt[0] || pt.lat]);
+    coords.push(coords[0]); // close ring
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: [coords] },
+      properties: { id: p.id, polyType: p.polyType, label: p.label },
     });
   });
 
@@ -134,6 +140,15 @@ async function exportKMZ() {
       kml += `  <Placemark>
     <name>${l.label || l.lineType}</name>
     <LineString><coordinates>${coords}</coordinates></LineString>
+  </Placemark>\n`;
+    });
+
+    (window.polygons || []).forEach(p => {
+      const pts = [...p.latlngs, p.latlngs[0]];
+      const coords = pts.map(pt => `${pt[1] || pt.lng},${pt[0] || pt.lat},0`).join(' ');
+      kml += `  <Placemark>
+    <name>${p.label || p.polyType}</name>
+    <Polygon><outerBoundaryIs><LinearRing><coordinates>${coords}</coordinates></LinearRing></outerBoundaryIs></Polygon>
   </Placemark>\n`;
     });
 

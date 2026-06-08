@@ -743,18 +743,95 @@ function _fillFormationsTab(panel) {
   if (other.length) panel.appendChild(_makeSubSection('Neutral / Unknown', _symbolGrid(other), false));
 }
 
+function _lineBody(lines) {
+  const body = document.createElement('div');
+  body.className = 'toolbar-section-body';
+  lines.forEach(({ type, label }) => {
+    const style = LINE_STYLES[type] || { color: '#888', dashArray: null };
+    const btn = document.createElement('button');
+    btn.className = 'tool-btn';
+    btn.dataset.type = type;
+    btn.innerHTML = `<svg width="28" height="14" viewBox="0 0 28 14">
+      <line x1="2" y1="7" x2="26" y2="7" stroke="${style.color}" stroke-width="2" stroke-dasharray="${style.dashArray || 'none'}"/>
+    </svg><span class="btn-label">${label}</span>`;
+    btn.title = label;
+    btn.onclick = () => setMode('DRAW_LINE', type);
+    body.appendChild(btn);
+  });
+  return body;
+}
+
+function _areaBody(areas) {
+  const body = document.createElement('div');
+  body.className = 'toolbar-section-body';
+  areas.forEach(({ type, label }) => {
+    const style = AREA_STYLES[type] || {};
+    const color = style.color || '#4a90b8';
+    const fill = style.fillColor || color;
+    const dash = style.dashArray || 'none';
+    const btn = document.createElement('button');
+    btn.className = 'tool-btn';
+    btn.dataset.type = type;
+    btn.innerHTML = `<svg width="28" height="20" viewBox="0 0 28 20">
+      <polygon points="4,17 14,3 24,17"
+        fill="${fill}" fill-opacity="0.2"
+        stroke="${color}" stroke-width="1.5" stroke-dasharray="${dash}"/>
+    </svg><span class="btn-label">${label}</span>`;
+    btn.title = label + ' — click points, dbl-click to finish';
+    btn.onclick = () => setMode('DRAW_POLYGON', type);
+    body.appendChild(btn);
+  });
+  return body;
+}
+
 function _fillTacticalTab(panel) {
   if (!panel) return;
-  panel.appendChild(makeLineSection('Tactical Lines', [
-    { type: 'phase-line',     label: 'Phase Line' },
-    { type: 'loa',            label: 'LOA' },
-    { type: 'ld',             label: 'LD / LC' },
-    { type: 'unit-boundary',  label: 'Unit Boundary' },
-    { type: 'engagement-area',label: 'Engagement Area' },
-    { type: 'axis-advance',   label: 'Axis of Advance' },
-    { type: 'dir-attack',     label: 'Dir of Attack' },
-    { type: 'trp',            label: 'TRP' },
-  ], true));
+
+  panel.appendChild(_makeSubSection('Maneuver Control Lines', _lineBody([
+    { type: 'phase-line',    label: 'Phase Line' },
+    { type: 'loa',           label: 'LOA' },
+    { type: 'ld',            label: 'LD' },
+    { type: 'lc',            label: 'LC' },
+    { type: 'ld-lc',         label: 'LD/LC' },
+    { type: 'flot',          label: 'FLOT' },
+    { type: 'fcl',           label: 'FCL' },
+    { type: 'unit-boundary', label: 'Boundary' },
+    { type: 'axis-advance',  label: 'Axis Adv' },
+    { type: 'dir-attack',    label: 'Dir Atk' },
+  ]), true));
+
+  panel.appendChild(_makeSubSection('Maneuver Areas', _areaBody([
+    { type: 'objective',          label: 'Objective' },
+    { type: 'assembly-area',      label: 'Assembly Area' },
+    { type: 'assault-pos',        label: 'Assault Pos' },
+    { type: 'attack-pos',         label: 'Attack Pos' },
+    { type: 'battle-pos',         label: 'Battle Pos' },
+    { type: 'engagement-area-poly', label: 'Engagement Area' },
+    { type: 'nai',                label: 'NAI' },
+    { type: 'tai',                label: 'TAI' },
+  ]), false));
+
+  panel.appendChild(_makeSubSection('Obstacle Lines', _lineBody([
+    { type: 'obstacle-line',  label: 'Obstacle' },
+    { type: 'minefield-line', label: 'Minefield' },
+    { type: 'wire-obstacle',  label: 'Wire' },
+    { type: 'at-ditch',       label: 'AT Ditch' },
+  ]), false));
+
+  panel.appendChild(_makeSubSection('Obstacle Areas', _areaBody([
+    { type: 'minefield-area', label: 'Minefield Area' },
+    { type: 'obstacle-zone',  label: 'Obstacle Zone' },
+  ]), false));
+
+  panel.appendChild(_makeSubSection('Logistics Routes', _lineBody([
+    { type: 'msr', label: 'MSR' },
+    { type: 'asr', label: 'ASR' },
+  ]), false));
+
+  panel.appendChild(_makeSubSection('Logistics Areas', _areaBody([
+    { type: 'logistics-area', label: 'Logistics Area' },
+    { type: 'farp',           label: 'FARP' },
+  ]), false));
 }
 
 function _fillEquipmentTab(panel) {
@@ -998,15 +1075,28 @@ function _wireSearch() {
       aff: def.aff, keywords: (def.label + ' ' + type + ' ' + def.aff).toLowerCase(),
     })),
     ...[
-      { type: 'phase-line',     label: 'Phase Line' },
-      { type: 'loa',            label: 'LOA' },
-      { type: 'ld',             label: 'LD / LC' },
-      { type: 'unit-boundary',  label: 'Unit Boundary' },
-      { type: 'engagement-area',label: 'Engagement Area' },
-      { type: 'axis-advance',   label: 'Axis of Advance' },
-      { type: 'dir-attack',     label: 'Direction of Attack' },
-      { type: 'trp',            label: 'TRP' },
+      { type: 'phase-line',    label: 'Phase Line' },
+      { type: 'loa',           label: 'LOA' },
+      { type: 'ld',            label: 'LD' },
+      { type: 'lc',            label: 'LC' },
+      { type: 'ld-lc',         label: 'LD/LC' },
+      { type: 'flot',          label: 'FLOT' },
+      { type: 'fcl',           label: 'FCL' },
+      { type: 'unit-boundary', label: 'Unit Boundary' },
+      { type: 'axis-advance',  label: 'Axis of Advance' },
+      { type: 'dir-attack',    label: 'Direction of Attack' },
+      { type: 'trp',           label: 'TRP' },
+      { type: 'obstacle-line', label: 'Obstacle Line' },
+      { type: 'minefield-line',label: 'Minefield Line' },
+      { type: 'wire-obstacle', label: 'Wire Obstacle' },
+      { type: 'at-ditch',      label: 'AT Ditch' },
+      { type: 'msr',           label: 'MSR' },
+      { type: 'asr',           label: 'ASR' },
     ].map(l => ({ kind: 'line', ...l, keywords: (l.label + ' ' + l.type).toLowerCase() })),
+    ...Object.keys(AREA_STYLES).map(type => ({
+      kind: 'area', type, label: AREA_STYLES[type].label || type,
+      keywords: ((AREA_STYLES[type].label || '') + ' ' + type + ' area polygon').toLowerCase(),
+    })),
   ];
 
   let activeType = null;
@@ -1027,11 +1117,12 @@ function _wireSearch() {
     matches.forEach(entry => {
       const li = document.createElement('li');
       li.className = 'search-result-item';
-      const icon = entry.kind === 'symbol'
-        ? buildPreviewSvg(entry.type)
-        : `<svg width="22" height="10" viewBox="0 0 22 10"><line x1="1" y1="5" x2="21" y2="5" stroke="#888" stroke-width="1.5"/></svg>`;
+      let icon;
+      if (entry.kind === 'symbol') icon = buildPreviewSvg(entry.type);
+      else if (entry.kind === 'area') icon = `<svg width="22" height="14" viewBox="0 0 22 14"><polygon points="3,12 11,2 19,12" fill="#4a90b822" stroke="#4a90b8" stroke-width="1.5"/></svg>`;
+      else icon = `<svg width="22" height="10" viewBox="0 0 22 10"><line x1="1" y1="5" x2="21" y2="5" stroke="#888" stroke-width="1.5"/></svg>`;
       li.innerHTML = `<span class="sr-icon">${icon}</span><span class="sr-label">${entry.label}</span>
-                      <span class="sr-kind">${entry.kind === 'symbol' ? entry.aff : 'line'}</span>`;
+                      <span class="sr-kind">${entry.kind === 'symbol' ? entry.aff : entry.kind}</span>`;
       li.addEventListener('mousedown', e => {
         e.preventDefault();
         selectEntry(entry);
@@ -1051,6 +1142,10 @@ function _wireSearch() {
     if (entry.kind === 'symbol') {
       setMode('PLACE', entry.type);
       selIcon.innerHTML  = buildPreviewSvg(entry.type);
+      selLabel.textContent = entry.label;
+    } else if (entry.kind === 'area') {
+      setMode('DRAW_POLYGON', entry.type);
+      selIcon.innerHTML  = `<svg width="22" height="14" viewBox="0 0 22 14"><polygon points="3,12 11,2 19,12" fill="#4a90b822" stroke="#4a90b8" stroke-width="1.5"/></svg>`;
       selLabel.textContent = entry.label;
     } else {
       setMode('DRAW_LINE', entry.type);

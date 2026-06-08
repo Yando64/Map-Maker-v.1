@@ -31,6 +31,12 @@ function saveOverlay() {
       label: l.label,
       latlngs: l.latlngs,
     })),
+    polygons: (window.polygons || []).map(p => ({
+      id: p.id,
+      polyType: p.polyType,
+      label: p.label,
+      latlngs: p.latlngs,
+    })),
   };
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -62,6 +68,9 @@ function applyOverlay(data) {
   });
   (data.lines || []).forEach(l => {
     window.drawLine(l.latlngs, l.lineType, l.label, l, false);
+  });
+  (data.polygons || []).forEach(p => {
+    window.drawPolygon(p.latlngs, p.polyType, p.label, p, false);
   });
 
   window.updateStatusCounts();

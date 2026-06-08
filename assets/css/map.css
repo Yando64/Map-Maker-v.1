@@ -511,3 +511,26 @@
   box-shadow: 0 2px 8px var(--shadow);
   display: none;
 }
+
+/* AREA LABELS */
+.area-label {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 5px #000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+[data-theme="light"] .area-label { color: #000; text-shadow: 0 0 3px #fff, 0 0 5px #fff; }
+
+/* Drawing hint in status bar */
+.draw-hint {
+  font-style: italic;
+  color: var(--accent);
+  padding: 0 12px;
+  font-size: 11px;
+}

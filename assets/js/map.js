@@ -69,6 +69,8 @@ function initMap() {
       window.placeUnit(e.latlng, window.appState.placeType);
     } else if (window.appState && window.appState.mode === 'DRAW_LINE') {
       window.addLinePoint(e.latlng);
+    } else if (window.appState && window.appState.mode === 'DRAW_POLYGON') {
+      window.addPolygonPoint(e.latlng);
     }
     document.getElementById('context-menu').classList.remove('open');
   });
