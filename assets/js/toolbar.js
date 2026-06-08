@@ -18,11 +18,19 @@ window._history = [];
 window._historyIndex = -1;
 window._drawingPoints = [];
 window._drawPolyline = null;
+window.polygons = [];
+window._polygonPoints = [];
+window._polygonPreview = null;
+window.selectedPolyId = null;
 
 // ─── History ──────────────────────────────────────────────────────────────────
 
 function pushHistory() {
-  const state = JSON.stringify({ units: window.units.map(u => ({ ...u, _marker: undefined })), lines: window.lines });
+  const state = JSON.stringify({
+    units: window.units.map(u => ({ ...u, _marker: undefined })),
+    lines: window.lines,
+    polygons: window.polygons.map(p => ({ ...p, _layer: undefined })),
+  });
   if (window._history[window._historyIndex] === state) return;
   window._history = window._history.slice(0, window._historyIndex + 1);
   window._history.push(state);
@@ -43,15 +51,16 @@ function redo() {
 }
 
 function restoreState(state) {
-  // Remove all markers
   window.units.forEach(u => { if (u._marker) window.map.removeLayer(u._marker); });
-  // Remove all lines
   window.lines.forEach(l => { if (l._layer) window.map.removeLayer(l._layer); });
+  (window.polygons || []).forEach(p => { if (p._layer) window.map.removeLayer(p._layer); });
   window.units = [];
   window.lines = [];
+  window.polygons = [];
 
   state.units.forEach(u => placeUnit(u.latlng, u.type, u, false));
   state.lines.forEach(l => drawLine(l.latlngs, l.lineType, l.label, l, false));
+  (state.polygons || []).forEach(p => drawPolygon(p.latlngs, p.polyType, p.label, p, false));
   updateStatusCounts();
   closePropPanel();
 }
@@ -66,9 +75,10 @@ function setMode(mode, subType) {
   window.appState.mode = mode;
   window.appState.placeType = mode === 'PLACE' ? subType : null;
   window.appState.drawLineType = mode === 'DRAW_LINE' ? subType : null;
+  window.appState.drawPolyType = mode === 'DRAW_POLYGON' ? subType : null;
 
   const mapEl = document.getElementById('map');
-  if (mode === 'PLACE' || mode === 'DRAW_LINE') {
+  if (mode === 'PLACE' || mode === 'DRAW_LINE' || mode === 'DRAW_POLYGON') {
     mapEl.style.cursor = 'crosshair';
   } else if (mode === 'DELETE') {
     mapEl.style.cursor = 'not-allowed';
@@ -76,12 +86,12 @@ function setMode(mode, subType) {
     mapEl.style.cursor = '';
   }
 
-  // Cancel drawing
   if (mode !== 'DRAW_LINE') cancelDrawing();
+  if (mode !== 'DRAW_POLYGON') cancelPolygonDrawing();
 
-  // Update status
   const modeLabel = mode === 'PLACE' ? `PLACE | ${subType || ''}` :
-                    mode === 'DRAW_LINE' ? `LINE | ${subType || ''}` : mode;
+                    mode === 'DRAW_LINE' ? `LINE | ${subType || ''}` :
+                    mode === 'DRAW_POLYGON' ? `AREA | ${subType || ''}` : mode;
   document.getElementById('status-mode-val').textContent = modeLabel;
 
   // Highlight active tool button
@@ -192,15 +202,41 @@ window.toggleLock = toggleLock;
 // ─── Line Drawing ─────────────────────────────────────────────────────────────
 
 const LINE_STYLES = {
-  'phase-line':    { color: '#4a90b8', weight: 2, dashArray: null },
-  'loa':           { color: '#4a90b8', weight: 2, dashArray: '8,4' },
-  'ld':            { color: '#e04040', weight: 2, dashArray: null },
-  'unit-boundary': { color: '#333333', weight: 1.5, dashArray: null },
-  'axis-advance':  { color: '#4a90b8', weight: 3, dashArray: null },
-  'dir-attack':    { color: '#e04040', weight: 3, dashArray: null },
-  'engagement-area': { color: '#e08020', weight: 1.5, dashArray: '6,3' },
-  'trp':           { color: '#e04040', weight: 2, dashArray: null },
+  'phase-line':     { color: '#4a90b8', weight: 2,   dashArray: null },
+  'loa':            { color: '#4a90b8', weight: 2,   dashArray: '8,4' },
+  'ld':             { color: '#e04040', weight: 2,   dashArray: null },
+  'lc':             { color: '#4a90b8', weight: 2,   dashArray: null },
+  'ld-lc':          { color: '#e04040', weight: 2,   dashArray: null },
+  'flot':           { color: '#4a90b8', weight: 2,   dashArray: '3,5' },
+  'fcl':            { color: '#4a90b8', weight: 2,   dashArray: '10,4,2,4' },
+  'unit-boundary':  { color: '#333333', weight: 1.5, dashArray: null },
+  'axis-advance':   { color: '#4a90b8', weight: 3,   dashArray: null },
+  'dir-attack':     { color: '#e04040', weight: 3,   dashArray: null },
+  'engagement-area':{ color: '#e08020', weight: 1.5, dashArray: '6,3' },
+  'trp':            { color: '#e04040', weight: 2,   dashArray: null },
+  'obstacle-line':  { color: '#333333', weight: 3,   dashArray: null },
+  'minefield-line': { color: '#e04040', weight: 2,   dashArray: '6,2' },
+  'wire-obstacle':  { color: '#a08020', weight: 1.5, dashArray: '2,4' },
+  'at-ditch':       { color: '#333333', weight: 3,   dashArray: '1,4' },
+  'msr':            { color: '#30a030', weight: 2.5, dashArray: null },
+  'asr':            { color: '#30a030', weight: 2,   dashArray: '8,4' },
 };
+
+const AREA_STYLES = {
+  'objective':       { color: '#4a90b8', fillColor: '#4a90b8', fillOpacity: 0.08, weight: 2,   dashArray: '8,4',  label: 'OBJ' },
+  'assembly-area':   { color: '#4a90b8', fillColor: '#4a90b8', fillOpacity: 0.08, weight: 1.5, dashArray: '6,3',  label: 'AA' },
+  'assault-pos':     { color: '#4a90b8', fillColor: '#4a90b8', fillOpacity: 0.08, weight: 2,   dashArray: null,   label: 'ASLT POS' },
+  'attack-pos':      { color: '#4a90b8', fillColor: '#4a90b8', fillOpacity: 0.08, weight: 2,   dashArray: null,   label: 'ATK POS' },
+  'battle-pos':      { color: '#4a90b8', fillColor: '#4a90b8', fillOpacity: 0.10, weight: 2,   dashArray: null,   label: 'BP' },
+  'engagement-area-poly': { color: '#e08020', fillColor: '#e08020', fillOpacity: 0.08, weight: 1.5, dashArray: '6,3', label: 'EA' },
+  'nai':             { color: '#9040b8', fillColor: '#9040b8', fillOpacity: 0.07, weight: 1.5, dashArray: '4,2',  label: 'NAI' },
+  'tai':             { color: '#9040b8', fillColor: '#9040b8', fillOpacity: 0.07, weight: 1.5, dashArray: '4,2',  label: 'TAI' },
+  'minefield-area':  { color: '#e04040', fillColor: '#e04040', fillOpacity: 0.12, weight: 1.5, dashArray: '4,2',  label: 'MINEFIELD' },
+  'obstacle-zone':   { color: '#555555', fillColor: '#555555', fillOpacity: 0.07, weight: 1.5, dashArray: '6,3',  label: 'OBZ' },
+  'logistics-area':  { color: '#30a030', fillColor: '#30a030', fillOpacity: 0.10, weight: 1.5, dashArray: null,   label: 'LOG AREA' },
+  'farp':            { color: '#30a030', fillColor: '#30a030', fillOpacity: 0.10, weight: 1.5, dashArray: null,   label: 'FARP' },
+};
+window.AREA_STYLES = AREA_STYLES;
 
 function addLinePoint(latlng) {
   window._drawingPoints.push(latlng);
@@ -317,6 +353,113 @@ window.cancelDrawing = cancelDrawing;
 window.drawLine = drawLine;
 window.deleteLine = deleteLine;
 
+// ─── Polygon / Area Drawing ───────────────────────────────────────────────────
+
+function addPolygonPoint(latlng) {
+  window._polygonPoints.push(latlng);
+  _updatePolygonPreview();
+}
+
+function _updatePolygonPreview() {
+  if (window._polygonPreview) window.map.removeLayer(window._polygonPreview);
+  if (window._polygonPoints.length < 2) return;
+  const polyType = window.appState.drawPolyType || 'objective';
+  const style = AREA_STYLES[polyType] || AREA_STYLES['objective'];
+  window._polygonPreview = L.polygon(window._polygonPoints, {
+    color: style.color,
+    fillColor: style.fillColor,
+    fillOpacity: style.fillOpacity * 0.5,
+    weight: style.weight,
+    dashArray: style.dashArray,
+    opacity: 0.6,
+  }).addTo(window.map);
+}
+
+function finishPolygon() {
+  if (window._polygonPoints.length < 3) { cancelPolygonDrawing(); return; }
+  const polyType = window.appState.drawPolyType || 'objective';
+  drawPolygon(window._polygonPoints.map(p => [p.lat, p.lng]), polyType, '', {}, true);
+  cancelPolygonDrawing();
+}
+
+function cancelPolygonDrawing() {
+  if (window._polygonPreview) {
+    window.map.removeLayer(window._polygonPreview);
+    window._polygonPreview = null;
+  }
+  window._polygonPoints = [];
+}
+
+function drawPolygon(latlngs, polyType, label, overrides = {}, addToHistory = true) {
+  const id = overrides.id || 'poly-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  const style = AREA_STYLES[polyType] || AREA_STYLES['objective'];
+  const polyObj = {
+    id, polyType,
+    label: overrides.label !== undefined ? overrides.label : (label || style.label || polyType),
+    latlngs,
+    _layer: null,
+  };
+
+  const layer = L.polygon(latlngs, {
+    color: style.color,
+    fillColor: style.fillColor,
+    fillOpacity: style.fillOpacity,
+    weight: style.weight,
+    dashArray: style.dashArray,
+  }).addTo(window.map);
+  polyObj._layer = layer;
+
+  if (polyObj.label) {
+    layer.bindTooltip(polyObj.label, { permanent: true, className: 'area-label', direction: 'center' });
+  }
+
+  layer.on('click', e => {
+    L.DomEvent.stopPropagation(e);
+    if (window.appState.mode === 'DELETE') { deletePolygon(polyObj.id); return; }
+    window.selectedPolyId = polyObj.id;
+    openPolygonPropPanel(polyObj);
+  });
+
+  if (addToHistory) pushHistory();
+  window.polygons.push(polyObj);
+  updateStatusCounts();
+  return polyObj;
+}
+
+function deletePolygon(id) {
+  const idx = window.polygons.findIndex(p => p.id === id);
+  if (idx === -1) return;
+  pushHistory();
+  const poly = window.polygons[idx];
+  if (poly._layer) window.map.removeLayer(poly._layer);
+  window.polygons.splice(idx, 1);
+  updateStatusCounts();
+}
+
+function openPolygonPropPanel(polyObj) {
+  const panel = document.getElementById('props-panel');
+  panel.classList.add('open');
+  panel.dataset.polyId = polyObj.id;
+  panel.dataset.unitId = '';
+  panel.dataset.lineId = '';
+  const style = AREA_STYLES[polyObj.polyType];
+  document.getElementById('props-title').textContent = (style?.label || polyObj.polyType) + ' Area';
+  document.getElementById('props-coords').textContent = '';
+  document.getElementById('prop-label').value = polyObj.label || '';
+  document.getElementById('prop-echelon').value = '';
+  document.getElementById('prop-affiliation').value = '';
+  document.getElementById('prop-hq').value = '';
+  document.getElementById('prop-notes').value = '';
+  const lockBtn = document.getElementById('props-lock-btn');
+  if (lockBtn) lockBtn.style.display = 'none';
+}
+
+window.addPolygonPoint = addPolygonPoint;
+window.finishPolygon = finishPolygon;
+window.cancelPolygonDrawing = cancelPolygonDrawing;
+window.drawPolygon = drawPolygon;
+window.deletePolygon = deletePolygon;
+
 // ─── Properties Panel ─────────────────────────────────────────────────────────
 
 function openPropPanel(unit) {
@@ -340,10 +483,30 @@ function openPropPanel(unit) {
 function closePropPanel() {
   document.getElementById('props-panel').classList.remove('open');
   window.selectedUnitId = null;
+  window.selectedPolyId = null;
   document.querySelectorAll('.sym-wrapper.selected').forEach(el => el.classList.remove('selected'));
+  const lockBtn = document.getElementById('props-lock-btn');
+  if (lockBtn) lockBtn.style.display = '';
 }
 
 function savePropPanel() {
+  // Handle polygon label save
+  if (window.selectedPolyId) {
+    const poly = window.polygons.find(p => p.id === window.selectedPolyId);
+    if (poly) {
+      pushHistory();
+      poly.label = document.getElementById('prop-label').value;
+      if (poly._layer) {
+        poly._layer.unbindTooltip();
+        if (poly.label) {
+          poly._layer.bindTooltip(poly.label, { permanent: true, className: 'area-label', direction: 'center' });
+        }
+      }
+    }
+    closePropPanel();
+    return;
+  }
+
   const id = window.selectedUnitId;
   const unit = window.units.find(u => u.id === id);
   if (!unit) return;
@@ -363,11 +526,13 @@ function savePropPanel() {
 }
 
 function openLinePropPanel(lineObj) {
-  // Reuse props panel for lines (simplified)
   const panel = document.getElementById('props-panel');
   panel.classList.add('open');
   panel.dataset.lineId = lineObj.id;
   panel.dataset.unitId = '';
+  panel.dataset.polyId = '';
+  const lockBtn = document.getElementById('props-lock-btn');
+  if (lockBtn) lockBtn.style.display = 'none';
   document.getElementById('props-title').textContent = lineObj.lineType.replace(/-/g, ' ').toUpperCase();
   document.getElementById('props-coords').textContent = '';
   document.getElementById('prop-label').value = lineObj.label || '';
@@ -385,19 +550,22 @@ window.savePropPanel = savePropPanel;
 
 function updateStatusCounts() {
   document.getElementById('status-units').textContent = window.units.length;
-  document.getElementById('status-lines').textContent = window.lines.length;
+  document.getElementById('status-lines').textContent = window.lines.length + (window.polygons || []).length;
 }
 window.updateStatusCounts = updateStatusCounts;
 
 // ─── Clear All ────────────────────────────────────────────────────────────────
 
 function clearAll() {
-  if (!confirm('Clear all units and lines?')) return;
+  if (!confirm('Clear all units, lines, and areas?')) return;
   pushHistory();
   window.units.forEach(u => { if (u._marker) window.map.removeLayer(u._marker); });
   window.lines.forEach(l => { if (l._layer) window.map.removeLayer(l._layer); });
+  (window.polygons || []).forEach(p => { if (p._layer) window.map.removeLayer(p._layer); });
   window.units = [];
   window.lines = [];
+  window.polygons = [];
+  cancelPolygonDrawing();
   closePropPanel();
   updateStatusCounts();
 }
@@ -426,10 +594,12 @@ document.addEventListener('keydown', e => {
     case 'ESCAPE':
       setMode('SELECT');
       cancelDrawing();
+      cancelPolygonDrawing();
       closePropPanel();
       break;
     case 'ENTER':
       if (window.appState.mode === 'DRAW_LINE') finishLine();
+      else if (window.appState.mode === 'DRAW_POLYGON') finishPolygon();
       break;
   }
 });
@@ -442,6 +612,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.appState.mode === 'DRAW_LINE') {
           L.DomEvent.stopPropagation(e);
           finishLine();
+        } else if (window.appState.mode === 'DRAW_POLYGON') {
+          L.DomEvent.stopPropagation(e);
+          finishPolygon();
         }
       });
     }
